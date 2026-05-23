@@ -1,0 +1,33 @@
+<html>
+
+<head>
+<script>
+
+  let f = fetch("/api/v1/list_people").then((a) => console.log(a.json().then((j) => {
+    for (const x of j) {
+      let tr = document.createElement("tr");
+      for (const y of ["name", "e_number", "emails", "phones", "num_signups", "num_flying_days", "keenness", "briefing_score", "briefing_date"]) {
+        let td = document.createElement("td");
+        td.innerText = x[y]
+        tr.appendChild(td);
+      }
+      document.getElementById("whatever").appendChild(tr);
+    }
+  })));
+</script>
+</head>
+
+<body>
+<form method="post" enctype="multipart/form-data" action="/api/v1/add_signups">
+  <div>
+    <label for="file">Choose file to upload</label>
+    <input type="file" id="file" name="file" />
+  </div>
+  <div>
+    <button>Submit</button>
+  </div>
+</form>
+
+<table id="whatever"></table>
+
+</body>
