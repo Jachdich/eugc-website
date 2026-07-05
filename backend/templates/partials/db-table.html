@@ -1,0 +1,17 @@
+<table>
+{% for row in rows %}
+  <tr>
+  {% for col in row %}
+    <td>
+        {% if col == None %}
+        {% elif col is iterable and col is not string %}
+            {% for e in col %}
+                {{e}}
+            {% endfor %}
+        {% else %}
+            {{col}}
+        {% endif %}</td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>

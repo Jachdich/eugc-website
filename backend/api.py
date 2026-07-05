@@ -45,18 +45,27 @@ def upload_file():
 @app.route("/api/v1/list_people", methods=["GET"])
 def list_people():
     db = get_db()
-    people = main.list_people(db)
-    return [{
-        "id": person.id,
-        "name": person.name,
-        "e_number": person.e_number,
-        "emails": person.emails,
-        "phones": person.phones,
-        "num_signups": main.num_signups(db, person.id),
-        "num_flying_days": main.num_flying_days(db, person.id),
-        "keenness": person.keenness,
-        "briefing_score": person.briefing_score,
-        "briefing_date": person.briefing_date.timestamp() if person.briefing_date is not None else None,
-    } for person in [main.person_info(db, p) for p in people]]
+    people = [main.person_info(db, p) for p in main.list_people(db)]
 
-app.run()
+    rows = []
+    for person in people:
+        availability = main.availability(db, person.id)
+        row = [
+            person.id,
+            person.name,
+            person.notes,
+            person.e_number,
+            person.emails,
+            person.phones,
+            main.num_signups(db, person.id),
+            main.num_flying_days(db, person.id),
+            person.keenness,
+            person.briefing_score,
+            person.briefing_date.timestamp() if person.briefing_date is not None else None,
+            availability,
+        ]
+        rows.append(row)
+
+    return {"rows": rows}
+if __name__ == "__main__":
+    app.run(debug=True)

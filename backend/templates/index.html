@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>EUGC Database</title>
+    <script src="https://unpkg.com/htmx.org@1.5.0"></script>
+    <style>
+        
+        table {
+            border-collapse: collapse;
+            border: 1px solid #444444;
+            margin: 3px;
+            font-size: 12px;
+        }
+
+        td, th {
+            border: 1px solid #aaaaaa;
+        }
+
+        .item {
+            overflow-x: hidden;
+            max-width: 160px;
+            min-width: 24px;
+            height: 14px;
+            white-space: nowrap;
+        }
+    </style>
+    <script>
+        let sort = "name";
+        let filter_avail = false;
+        let avail = null;
+        window.onload = () => {
+            avail = document.getElementById("available");
+        };
+    </script>
+</head>
+
+<body>
+
+<div hx-get="/partials/db-table.html" hx-target="#result" hx-vals="js:{sort: sort, filter_avail: filter_avail}" hx-trigger="click[from:input]">
+    <button onclick="sort = 'name'">Name</button>
+    <button onclick="sort = 'id'">ID</button>
+    <input onclick="filter_avail = avail.checked" type="checkbox" id="available" name="available">
+    <label for="available">Available</label><br>
+</div>
+
+
+<div id="result"></div>
+
+</body>
+
+</html>

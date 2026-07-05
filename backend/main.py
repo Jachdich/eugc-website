@@ -193,9 +193,22 @@ def ingest_signups(db, data: list[tuple[any]]):
         
 def people_available(db, day: int) -> list[int]:
     cur = db.cursor()
-    now = datetime.datetime.now()
+    # now = datetime.datetime.now()
+    now = datetime.datetime(2025, 6, 16, 10, 3, 32, 13513)
     monday = now - datetime.timedelta(days=now.weekday())
     return [i[0] for i in cur.execute("select person from signups where available_days & ? and completed_datetime > ?", (day, monday.timestamp()))]
+
+def availability(db, person: int) -> int:
+    cur = db.cursor()
+    now = datetime.datetime(2025, 6, 16, 10, 3, 32, 13513)
+    monday = now - datetime.timedelta(days=now.weekday())
+    result = list(cur.execute("select available_days from signups where person = ? and completed_datetime > ?", (person, monday.timestamp())))
+    if len(result) == 0:
+        return 0
+    # assert not (len(result) > 1), "More than one person for the same ID"
+    print(result)
+    print(result[0][0])
+    return result[0][0]
 
 def num_signups(db, person):
     cur = db.cursor()
@@ -217,7 +230,7 @@ def person_info(db, person_id: int) -> Person | None:
     p = result[0]
     emails = [i[0] for i in cur.execute("select email from emails where person = ?", (p[0],))]
     phones = [i[0] for i in cur.execute("select phone from phones where person = ?", (p[0],))]
-    return Person(p[0], p[1], emails, phones, p[2], p[3], p[4], p[5], p[6], datetime.datetime.fromtimestamp(p[8]) if p[8] is not None else None, p[7])
+    return Person(p[0], p[1], emails, phones, p[2], p[3], p[4], p[5], p[6], datetime.datetime.fromtimestamp(p[8]) if p[8] is not None else None, p[10])
 
 def num_flying_days(db, person):
     cur = db.cursor()
@@ -241,47 +254,48 @@ def add_briefing(db, date: datetime.datetime, people_scores: list[(int, float)])
 
 flying_days = [next(cur.execute("insert into flying_days (date, instruct, drive, supervise) values (?, ?, ?, ?) returning id", (0, 0, 0, 0)))[0] for _ in range(50)]
 
-with open("flying_list.csv") as f:
-    r = csv.reader(f)
-    next(r)
-    for row in r:
-        name, e, cng, paid, email, phone, signups, flying, keenness, briefing_score, briefing_date, notes, _, _, _, _ = row
-        briefing_score = float(briefing_score) if briefing_score != "" else None
-        keenness = float(keenness) if keenness != "" else None
-        briefing_date = datetime.datetime.strptime(briefing_date, "%d/%m/%Y") if briefing_date != "" else None
-        notes = notes if notes != "" else None
-        e = int(e[1:]) if e != "" else None
-        signups = int(signups)
-        flying = int(flying)
-        name = (" ".join(reversed(name.split(",")))).strip()
-        emails = email.split(" ")
+if False:
+    with open("flying_list.csv") as f:
+        r = csv.reader(f)
+        next(r)
+        for row in r:
+            name, e, cng, paid, email, phone, signups, flying, keenness, briefing_score, briefing_date, notes, _, _, _, _ = row
+            briefing_score = float(briefing_score) if briefing_score != "" else None
+            keenness = float(keenness) if keenness != "" else None
+            briefing_date = datetime.datetime.strptime(briefing_date, "%d/%m/%Y") if briefing_date != "" else None
+            notes = notes if notes != "" else None
+            e = int(e[1:]) if e != "" else None
+            signups = int(signups)
+            flying = int(flying)
+            name = (" ".join(reversed(name.split(",")))).strip()
+            emails = email.split(" ")
         
-        # print(f"{name!r}", e, emails, phone, signups, flying, keenness, briefing_score, briefing_date, notes)
+            # print(f"{name!r}", e, emails, phone, signups, flying, keenness, briefing_score, briefing_date, notes)
 
-        person_id = next(cur.execute("insert into people (name, e_number, keenness, notes) values (?, ?, ?, ?) returning id", (name, e, keenness, notes)))[0]
-        for email in emails:
-            cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
+            person_id = next(cur.execute("insert into people (name, e_number, keenness, notes) values (?, ?, ?, ?) returning id", (name, e, keenness, notes)))[0]
+            for email in emails:
+                cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
 
-        if phone != "":
-            cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
-        for i in range(signups):
-            cur.execute("insert into signups (person, completed_datetime, available_days, notes) values (?, ?, ?, ?)", (person_id, 0, 0, None))
-        for i in range(flying):
-            cur.execute("insert into flying_days_people (flying_day, person) values (?, ?)", (flying_days[i], person_id))
+            if phone != "":
+                cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
+            for i in range(signups):
+                cur.execute("insert into signups (person, completed_datetime, available_days, notes) values (?, ?, ?, ?)", (person_id, 0, 0, None))
+            for i in range(flying):
+                cur.execute("insert into flying_days_people (flying_day, person) values (?, ?)", (flying_days[i], person_id))
 
-        if briefing_date is not None and briefing_score is not None:
-            add_briefing(con, briefing_date, [(person_id, briefing_score)])
+            if briefing_date is not None and briefing_score is not None:
+                add_briefing(con, briefing_date, [(person_id, briefing_score)])
             
 
 paths = [
- # "Edinburgh University Gliding Club Sem2 2025_2026(1-7).xlsx",
- # "Edinburgh University Gliding Club Sem2 2025_2026(1-8).xlsx",
+ "Edinburgh University Gliding Club Sem2 2025_2026(1-7).xlsx",
+ "Edinburgh University Gliding Club Sem2 2025_2026(1-8).xlsx",
 ]
 
 for path in paths:
     with open("/home/james/Downloads/"+path, "rb") as f:
         # data = f.read()
-        ingest_signups(read_excel(f))
+        ingest_signups(con, read_excel(f))
 
 # add_briefing(datetime.datetime(2025, 12, 4), [(1, 3), (2, 3), (3, 1)])
 
