@@ -3,14 +3,15 @@
     interface Props {
         value: "yes" | "no" | undefined,
         name: string,
+        highlight_required: boolean,
     }
 
-    let { value = $bindable(), name }: Props = $props();
+    let { value = $bindable(), name, highlight_required }: Props = $props();
 
 
 </script>
 
-<div class="radio-group">
+<div class="radio-group {highlight_required ? 'highlight-required' : ''}">
     <div class="radio">
       <input type="radio" id="yes-{name}" name={name} value="yes" bind:group={value} />
       <label for="yes-{name}">Yes</label>
@@ -25,5 +26,9 @@
 .radio {
     display: flex;
     flex-direction: row;
+}
+.highlight-required {
+    border: 2px solid red;
+    border-radius: 5px;
 }
 </style>

@@ -259,7 +259,7 @@ if False:
         r = csv.reader(f)
         next(r)
         for row in r:
-            name, e, cng, paid, email, phone, signups, flying, keenness, briefing_score, briefing_date, notes, _, _, _, _ = row
+            name, e, cng, paid, email, phone, signups, flying, keenness, briefing_score, briefing_date, notes, _, _, _, _, *rest = row
             briefing_score = float(briefing_score) if briefing_score != "" else None
             keenness = float(keenness) if keenness != "" else None
             briefing_date = datetime.datetime.strptime(briefing_date, "%d/%m/%Y") if briefing_date != "" else None
