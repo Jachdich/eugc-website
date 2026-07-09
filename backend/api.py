@@ -67,5 +67,13 @@ def list_people():
         rows.append(row)
 
     return {"rows": rows}
+
+@app.route("/api/v1/availability_form", methods=["POST"])
+def availability_form():
+    data = request.get_json()
+    db = get_db()
+    main.ingest_one_signup(db, data["trial"], data["briefing"], data["name"], data["availability"], data["notes"], data["email"], data["phone"], data["car"], )
+    return flask.Response(status=200)
+
 if __name__ == "__main__":
     app.run(debug=True)

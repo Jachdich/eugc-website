@@ -19,7 +19,8 @@
 
     let tried_submit = $state(false);
 
-    function submit() {
+    function submit(e: Event) {
+        e.preventDefault();
         tried_submit = true;
         if (
             name.trim() !== "" &&
@@ -48,8 +49,16 @@
               headers: {
                 "Content-type": "application/json; charset=UTF-8"
               }
+            }).then((response) => {
+                if (response.status == 200) {
+                    window.location.href = "/form-success";
+                } else {
+                    alert("Server sent error code: " + response.status);
+                    window.location.href = "/form-failure";
+                }
             });
         }
+
         return false;
     }
     
