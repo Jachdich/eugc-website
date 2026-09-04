@@ -1,0 +1,43 @@
+---
+import Nav from "../components/Nav.svelte";
+---
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Astro Basics</title>
+	</head>
+	<body>
+    <div id="whole-page">
+      <div id="nav">
+        <Nav client:load />
+      </div>
+      <div id="main-content">
+    		<slot />
+      </div>
+    </div>
+	</body>
+</html>
+
+<style>
+	html,
+	body {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+    font-family: sans-serif;
+	}
+
+  #main-content {
+    max-width: 1024px;
+  }
+
+  #whole-page {
+    display: flex;
+    flex-direction: row;
+  }
+</style>

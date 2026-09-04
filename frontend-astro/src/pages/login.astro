@@ -1,0 +1,36 @@
+
+---
+import BasePage from '../layouts/BasePage.astro';
+---
+
+<BasePage>
+  <script>
+
+async function submit(e: Event) {
+    e.preventDefault();
+
+    const id_input = document.getElementById("id");
+    const password_element = document.getElementById("password");
+    const id = Number.parseInt(id_input.value);
+    const password = password_element.value;
+    let response = await fetch("/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id, password: password})});
+    if (response.status == 200) {
+        window.location.href = "/gettingstarted";
+    } else {
+        window.location.href = "/login-failure";
+    }
+}
+const form = document.getElementById("form");
+form.onsubmit = submit;
+
+  </script>
+  <form id="form">
+    <label for="id">User ID</label>
+    <input type="text" id="id" />
+    <br>
+    <label for="password">Password</label>
+    <input type="password" id="password"/>
+    <br>
+    <input type="submit" />
+  </form>
+</BasePage>

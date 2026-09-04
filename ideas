@@ -3,3 +3,25 @@ calendar of how much flying
 way to enter details of direct payment
 easily calculate figures like flying fees earnt maybe? idk maybe aerolog is sufficient. might need to store changes in flying fees, launch fees
 keep track of why we didn't fly on particular days
+
+
+# How to make it easy to make new memebership numbers - can't just be me being able to, automate the process or make it easy for anyone, document it
+# In general we need better account logging - who pays for what flights, did they actually pay, E0000 costs broken down, mx, etc - internal use, record keeping
+# improved planning of weekly flying
+
+# TODO
+# warn about double entry
+# people signing up twice a week
+# handle multiple/changing emails/phones
+
+essential:
+	- login
+	- add yourself or others to org
+	- modify cells in db
+
+nice:
+	- better ctrl+f on db
+	- signing up twice overwrites previous signup, warns, and keeps old one for reference
+
+bugs:
+	- deleting number cells in db sets them to zero even when they should disappear

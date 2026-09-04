@@ -14,7 +14,9 @@
         BriefingDate: 10,
         AvailFri: 11,
         AvailSat: 12,
-        AvailSun: 13
+        AvailSun: 13,
+        DaySinceFly: 14,
+        SignupSinceFly: 15,
     } as const;
 
     const MONDAY   = 0b0000001;
@@ -42,6 +44,8 @@
             number | null,
             number | null,
             number | null,
+            number | null,
+            number | null,
         ],
         inputs: HTMLInputElement[],
     }
@@ -55,6 +59,7 @@
                 row[11] & FRIDAY ? 0 : null,
                 row[11] & SATURDAY ? 0 : null,
                 row[11] & SUNDAY ? 0 : null,
+                row[12], row[13]
             ] as any,
             inputs: [],
         }});
@@ -177,26 +182,40 @@
     }
 
     function parse_cell_value(value: string, column: number, row: number) {
+        let updated = true;
+        let original = table[row].cells[column];
         if (column == RowIx.ENumber) {
             table[row].cells[RowIx.ENumber] = Number.parseInt(value.substring(1));
-        }
-
-        if (column == RowIx.Name) {
+        } else if (column == RowIx.Name) {
             table[row].cells[RowIx.Name] = value;
-        }
-        if (column == RowIx.Notes) {
+        } else if (column == RowIx.Notes) {
             table[row].cells[RowIx.Notes] = value == "" ? null : value;
-        }
-
-        if (column == RowIx.Emails || column == RowIx.Phones) {
+        } else if (column == RowIx.Emails || column == RowIx.Phones) {
             table[row].cells[column] = value.split(",").map((i) => i.trim());
+        } else if (column == RowIx.Keenness) {
+            table[row].cells[column] = value == "" ? 0 : Number.parseFloat(value);
+        } else {
+            updated = false;
         }
 
-        // if (column == RowIx.NumSignups || column == RowIx.NumFlyingDays) {
-        //     table[row].cells[column] = value == "" ? 0 : Number.parseInt(value);
-        // }
-        if (column == RowIx.Keenness) {
-            table[row].cells[column] = value == "" ? 0 : Number.parseFloat(value);
+        if (updated) {
+            const packet = {
+                id: table[row].cells[RowIx.Id], col: column, new_value: table[row].cells[column]
+            };
+            fetch("/api/v1/update-cell", {
+              method: "POST",
+              body: JSON.stringify(packet),
+              headers: {
+                "Content-type": "application/json; charset=UTF-8"
+              }
+            }).then((response) => {
+                if (response.status == 200) {
+
+                } else {
+                    alert("Failed to set cell value: " + response.status);
+                    table[row].cells[column] = original;
+                }
+            });
         }
 
     }
@@ -205,23 +224,26 @@
         name: string,
         width: number,
         readonly: boolean,
+        idx: number,
     }
     
     const COL_INFOS: ColumnInfo[] = [
-        {name: "ID", width: 24, readonly: true},
-        {name: "Name", width: 150, readonly: false},
-        {name: "Notes", width: 160, readonly: false},
-        {name: "E number", width: 40, readonly: false},
-        {name: "Email", width: 140, readonly: false},
-        {name: "Phone", width: 130, readonly: false},
-        {name: "Signups", width: 40, readonly: true},
-        {name: "Flying days", width: 40, readonly: true},
-        {name: "Keenness", width: 30, readonly: false},
-        {name: "Briefing score", width: 30, readonly: true},
-        {name: "Recency", width: 80, readonly: true},
-        {name: "Fri", width: 20, readonly: false},
-        {name: "Sat", width: 20, readonly: false},
-        {name: "Sun", width: 20, readonly: false},
+        {idx: RowIx.Id,            name: "ID", width: 24, readonly: true},
+        {idx: RowIx.Name,          name: "Name", width: 150, readonly: false},
+        {idx: RowIx.ENumber,       name: "Exxx", width: 40, readonly: false},
+        {idx: RowIx.NumSignups,    name: "Signups", width: 40, readonly: true},
+        {idx: RowIx.NumFlyingDays, name: "Flies", width: 40, readonly: true},
+        {idx: RowIx.Keenness,      name: "Keenness", width: 30, readonly: false},
+        {idx: RowIx.BriefingScore, name: "Score", width: 30, readonly: true},
+        {idx: RowIx.DaySinceFly,   name: "DSLF", width: 20, readonly: true},
+        {idx: RowIx.SignupSinceFly,name: "SSLF", width: 20, readonly: true},
+        {idx: RowIx.AvailFri,      name: "Fri", width: 20, readonly: false},
+        {idx: RowIx.AvailSat,      name: "Sat", width: 20, readonly: false},
+        {idx: RowIx.AvailSun,      name: "Sun", width: 20, readonly: false},
+        {idx: RowIx.BriefingDate,  name: "Recency", width: 80, readonly: true},
+        {idx: RowIx.Emails,        name: "Email", width: 140, readonly: false},
+        {idx: RowIx.Phones,        name: "Phone", width: 110, readonly: false},
+        {idx: RowIx.Notes,         name: "Notes", width: 250, readonly: false},
     ]
 
     function input_keypress(e: KeyboardEvent, row_index: number, col_index: number) {
@@ -232,38 +254,51 @@
         }
     }
 
-    function get_values(row: Row): string[] {
-        let date_str = "";
-        const briefing_date = row.cells[RowIx.BriefingDate];
-        if (briefing_date !== null) {
-            const date = new Date(briefing_date * 1000);
-            const d = date.getDate();
-            const m = date.getMonth();
-            const y = date.getFullYear();
-            date_str = `${d}/${m}/${y}`;
+    function to_string_empty_if_null(value: string | number | null): string {
+        if (value === null) return "";
+        return value.toString();
+    }
+
+    function serialise_cell(row: Row, column: number): string {
+        switch (column) {
+            case RowIx.Id: return row.cells[column].toString();
+            case RowIx.Name: return row.cells[column];
+            case RowIx.Notes: {
+                let notes = row.cells[column];
+                return notes === null ? "" : notes;
+            }
+            case RowIx.ENumber: return row.cells[RowIx.ENumber] === null ? "" : "E" + row.cells[RowIx.ENumber].toString();
+            case RowIx.Emails: return row.cells[column].join(",");
+            case RowIx.Phones: return row.cells[column].join(",");
+            case RowIx.NumSignups: return row.cells[column].toString();
+            case RowIx.NumFlyingDays: return row.cells[column].toString();
+            case RowIx.BriefingScore: {
+                let score = row.cells[column];
+                return score === null ? "" : score.toString();
+            }
+            case RowIx.Keenness: {
+                let score = row.cells[column];
+                return score === null ? "" : score.toString();
+            }
+            case RowIx.BriefingDate: {
+                let date_str = "";
+                const briefing_date = row.cells[RowIx.BriefingDate];
+                if (briefing_date !== null) {
+                    const date = new Date(briefing_date * 1000);
+                    const d = date.getDate();
+                    const m = date.getMonth();
+                    const y = date.getFullYear();
+                    date_str = `${d}/${m}/${y}`;
+                }
+                return date_str;
+            }
+            case RowIx.AvailFri: return to_string_empty_if_null(row.cells[column]);
+            case RowIx.AvailSat: return to_string_empty_if_null(row.cells[column]);
+            case RowIx.AvailSun: return to_string_empty_if_null(row.cells[column]);
+            case RowIx.DaySinceFly:    return to_string_empty_if_null(row.cells[column]);
+            case RowIx.SignupSinceFly: return to_string_empty_if_null(row.cells[column]);
         }
-        let keenness = row.cells[RowIx.Keenness];
-        let briefing_score = row.cells[RowIx.BriefingScore];
-        let notes = row.cells[RowIx.Notes];
-        let afr = row.cells[RowIx.AvailFri];
-        let asa = row.cells[RowIx.AvailSat];
-        let asu = row.cells[RowIx.AvailSun];
-        return [
-            row.cells[RowIx.Id].toString(),
-            row.cells[RowIx.Name],
-            notes === null ? "" : notes,
-            row.cells[RowIx.ENumber] === null ? "" : "E" + row.cells[RowIx.ENumber].toString(),
-            row.cells[4].join(", "),
-            row.cells[5].join(", "),
-            row.cells[6].toString(),
-            row.cells[7].toString(),
-            keenness === null ? "" : keenness.toString(),
-            briefing_score === null ? "" : briefing_score.toString(),
-            date_str,
-            afr === null ? "" : afr.toString(),
-            asa === null ? "" : asa.toString(),
-            asu === null ? "" : asu.toString(),
-        ]
+        return "Unknown Column";
     }
     
 </script>
@@ -275,24 +310,25 @@
     <table>
         <thead>
             <tr>
-                {#each COL_INFOS as info, idx}
-                    <th><button style="min-width: {info.width}px;" onclick={() => sort(idx)}>{info.name}</button></th>
+                {#each COL_INFOS as info}
+                    <th><button style="min-width: {info.width}px;" onclick={() => sort(info.idx)}>{info.name}</button></th>
                 {/each}
             </tr>
         </thead>
         <tbody>
             {#each table_filtered as row, row_index}
                 <tr class="{row_index % 2 == 0 ? 'even-row' : 'odd-row'}">
-                    {#each get_values(row) as item, col_index}
+                    {#each COL_INFOS as info}
+                        {@const serialised_value = serialise_cell(row, info.idx)}
                         <td>
                             <input
                                 class="item"
-                                value={item}
-                                disabled={COL_INFOS[col_index].readonly}
-                                onblur={(e) => update_cell_value(e, item, row_index, col_index)}
-                                onkeypress={(e) => input_keypress(e, row_index, col_index)}
-                                bind:this={row.inputs[col_index]}
-                                oninput={(e) => validate_cell_value(e, col_index)}
+                                value={serialised_value}
+                                disabled={info.readonly}
+                                onblur={(e) => update_cell_value(e, serialised_value, row_index, info.idx)}
+                                onkeypress={(e) => input_keypress(e, row_index, info.idx)}
+                                bind:this={row.inputs[info.idx]}
+                                oninput={(e) => validate_cell_value(e, info.idx)}
                             />
                         </td>
                     {/each}

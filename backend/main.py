@@ -7,15 +7,6 @@ import openpyxl
 import datetime
 from dataclasses import dataclass
 
-# How to make it easy to make new memebership numbers - can't just be me being able to, automate the process or make it easy for anyone, document it
-# In general we need better account logging - who pays for what flights, did they actually pay, E0000 costs broken down, mx, etc - internal use, record keeping
-# improved planning of weekly flying
-
-# TODO
-# warn about double entry
-# people signing up twice a week
-# handle multiple/changing emails/phones
-
 fresh_start = not os.path.exists("eugc.db")
 
 con = sqlite3.connect("eugc.db")
@@ -103,6 +94,15 @@ create table if not exists legacy_info (
     foreign key (person) references people(id)
 )""")
 
+cur.execute("""
+create table if not exists user_accounts (
+    person integer primary key,
+    password_hash text not null,
+
+    foreign key (person) references people(id)
+)
+""")
+
 @dataclass
 class Person:
     id: int
@@ -166,7 +166,7 @@ def ingest_signups(db, data: list[tuple[any]]):
         raise ValueError(f"I don't know how to process header {header}")
     for row in body:
         start = row[indices["start"]]
-        reported_trial = row[indices["trial"]]
+        reported_trial = row[indices["trial"]] == "Yes"
         name = row[indices["name"]]
         days = row[indices["days"]]
         notes = row[indices["notes"]]
@@ -280,7 +280,7 @@ def num_flying_days(db, person):
 def last_flying_days(db, person):
     cur = db.cursor()
     pass
-    
+
 def add_flying_day(db, date: datetime.datetime, instruct_id: int, drive_id: int, supervise_id: int, notes: str | None, people: list[int]):
     cur = db.cursor()
     day_id = next(cur.execute("insert into flying_days (date, instruct, drive, supervise, notes) values (?, ?, ?, ?, ?)", (date.timestamp(), instruct_id, drive_id, supervise_id, notes)))[0]
@@ -293,7 +293,7 @@ def add_briefing(db, date: datetime.datetime, people_scores: list[(int, float)])
     cur.executemany("insert into briefings (person, date, score) values (?, ?, ?)", [(person, date.timestamp(), score) for person, score in people_scores])
     db.commit()
 
-flying_days = [next(cur.execute("insert into flying_days (date, instruct, drive, supervise) values (?, ?, ?, ?) returning id", (0, 0, 0, 0)))[0] for _ in range(50)]
+# flying_days = [next(cur.execute("insert into flying_days (date, instruct, drive, supervise) values (?, ?, ?, ?) returning id", (0, 0, 0, 0)))[0] for _ in range(50)]
 
 if fresh_start:
     with open("flying_list.csv") as f:

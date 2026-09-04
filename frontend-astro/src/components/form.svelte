@@ -124,7 +124,7 @@
     <YesNo name="car" bind:value={car} highlight_required={false}/>
   </div>
 
-  <input type="submit" />
+  <input type="submit" value="Submit" />
 
 </form>
 <style>
@@ -152,5 +152,8 @@ input[type="text"], input[type="email"] {
     border-radius: 5px;
 }
 
+input[type="submit"] {
+    margin-top: 8px;
+}
 
 </style>
