@@ -29,13 +29,7 @@ cur.execute("""
 create table if not exists flying_days (
     id integer primary key,
     date integer not null,
-    instruct integer not null,
-    drive integer not null,
-    supervise integer not null,
-    notes text,
-    foreign key (instruct) references people(id),
-    foreign key (drive) references people(id),
-    foreign key (supervise) references people(id)
+    notes text
 )""")
 
 cur.execute("""
@@ -47,6 +41,35 @@ create table if not exists flying_days_people (
     foreign key (flying_day) references flying_days(id),
     unique (flying_day, person)
 )""")
+cur.execute("""
+create table if not exists flying_days_instructors (
+    id integer primary key,
+    flying_day integer not null,
+    person integer not null,
+    foreign key (person) references people(id),
+    foreign key (flying_day) references flying_days(id),
+    unique (flying_day, person)
+)""")
+cur.execute("""
+create table if not exists flying_days_transporters (
+    id integer primary key,
+    flying_day integer not null,
+    person integer not null,
+    spaces integer not null,
+    foreign key (person) references people(id),
+    foreign key (flying_day) references flying_days(id),
+    unique (flying_day, person)
+)""")
+cur.execute("""
+create table if not exists flying_days_supervisors (
+    id integer primary key,
+    flying_day integer not null,
+    person integer not null,
+    foreign key (person) references people(id),
+    foreign key (flying_day) references flying_days(id),
+    unique (flying_day, person)
+)""")
+
 
 cur.execute("""
 create table if not exists people (
@@ -223,7 +246,7 @@ def ingest_one_signup(db, reported_trial, briefing, name, available_days, notes,
     )
 
     db.commit()
-        
+
 def people_available(db, day: int) -> list[int]:
     cur = db.cursor()
     # now = datetime.datetime.now()
@@ -260,10 +283,11 @@ def num_signups(db, person):
 
 def person_info(db, person_id: int) -> Person | None:
     cur = db.cursor()
-    result = list(cur.execute("select * from people left join briefings on people.id = briefings.person where people.id = ?", (person_id,)))
+    # take the latest briefing for each person
+    result = list(cur.execute("select * from people left join briefings on people.id = briefings.person where people.id = ? order by briefings.date desc limit 1", (person_id,)))
     if len(result) == 0:
         return None
-    assert not (len(result) > 1), "More than one person for the same ID"
+    # assert not (len(result) > 1), "More than one person for the same ID"
     p = result[0]
     emails = [i[0] for i in cur.execute("select email from emails where person = ?", (p[0],))]
     phones = [i[0] for i in cur.execute("select phone from phones where person = ?", (p[0],))]
@@ -277,15 +301,48 @@ def num_flying_days(db, person):
         count += fudge_factor[0][0]
     return count
 
+@dataclass
+class FlyingDay:
+    id: int
+    date: datetime.datetime
+    supervise: list[int]
+    transport: list[(int, int)]
+    instruct: list[int]
+    attend: list[int]
+    notes: str | None
+
+    def to_json(self):
+        return {"id": self.id, "date": self.date.timestamp(), "supervise": self.supervise, "transport": self.transport, "instruct": self.instruct, "attend": self.attend, "notes": self.notes}
+
+def get_flying_day(db, id: int) -> FlyingDay:
+    cur = db.cursor()
+    date, notes = next(cur.execute("select date, notes from flying_days where id = ?", (id,)))
+    day = FlyingDay(id, datetime.datetime.fromtimestamp(date), [], [], [], [], notes)
+    day.instruct = list(cur.execute("select person from flying_days_instructors where flying_day = ?", (id,)))
+    day.supervise = list(cur.execute("select person from flying_days_supervisors where flying_day = ?", (id,)))
+    day.attend = list(cur.execute("select person from flying_days_people where flying_day = ?", (id,)))
+    day.transport = list(cur.execute("select person, spaces from flying_days_transporters where flying_day = ?", (id,)))
+    return day
+
+def list_flying_days(db) -> list[int]:
+    cur = db.cursor()
+    return [i[0] for i in cur.execute("select id from flying_days")]
+
 def last_flying_days(db, person):
     cur = db.cursor()
     pass
 
-def add_flying_day(db, date: datetime.datetime, instruct_id: int, drive_id: int, supervise_id: int, notes: str | None, people: list[int]):
+def add_flying_day(db, day: FlyingDay):
     cur = db.cursor()
-    day_id = next(cur.execute("insert into flying_days (date, instruct, drive, supervise, notes) values (?, ?, ?, ?, ?)", (date.timestamp(), instruct_id, drive_id, supervise_id, notes)))[0]
-    for person in people:
+    day_id = next(cur.execute("insert into flying_days (date, notes) values (?,  ?) returning id", (day.date.timestamp(), day.notes)))[0]
+    for person in day.attend:
         cur.execute("insert into flying_days_people (flying_day, person) values (?, ?)", (day_id, person))
+    for person in day.instruct:
+        cur.execute("insert into flying_days_instructors (flying_day, person) values (?, ?)", (day_id, person))
+    for person, spaces in day.transport:
+        cur.execute("insert into flying_days_transporters (flying_day, person, spaces) values (?, ?, ?)", (day_id, person, spaces))
+    for person in day.supervise:
+        cur.execute("insert into flying_days_supervisors (flying_day, person) values (?, ?)", (day_id, person))
     db.commit()
 
 def add_briefing(db, date: datetime.datetime, people_scores: list[(int, float)]):
@@ -343,6 +400,17 @@ if fresh_start:
 # for person in people_available(SUNDAY):
 #     info = person_info(person)
 #     print(info,num_signups(person))
+# days = [
+#     FlyingDay(0, datetime.datetime(2026, 1, 2),  [10], [[4, 1], [5, 1], [6, 1]], [1, 2], [], None),
+#     FlyingDay(0, datetime.datetime(2026, 1, 3),  [1], [], [8], [], None),
+#     FlyingDay(0, datetime.datetime(2026, 1, 4),  [18, 19, 20], [[30, 2]], [], [], "Long kinda note because something serious happened at the airfield that caused some significant problems for EUGC including the agreement"),
+#     FlyingDay(0, datetime.datetime(2026, 1, 9),  [], [[6, 4]], [], [], None),
+#     FlyingDay(0, datetime.datetime(2026, 1, 10), [], [], [16], [], "Cancelled due to weather"),
+#     FlyingDay(0, datetime.datetime(2026, 1, 11), [], [], [17], [], None),
+# ]
+
+# for day in days:
+#     add_flying_day(con, day)
 
 def list_people(db):
     cur = db.cursor()

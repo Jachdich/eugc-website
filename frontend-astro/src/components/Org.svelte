@@ -2,31 +2,41 @@
 <script lang="ts">
 
     import PersonInput from "./PersonInput.svelte";
+    import { validate_float_string } from "./util";
     import { get_people_names } from "./api";
 
 
     interface Day {
         date: Date,
         instruct: number[],
-        transport: number[],
+        transport: [number, number][],
         supervise: number[],
+        attend: number[],
         notes: string | undefined,
     }
     let days: Day[] = $state([]);
+
+    export async function get_flying_days(): Promise<Array<Day>> {
+        let table = await fetch("/api/v1/get-flying-days");
+        let json = await table.json();
+        return json["rows"].map((day: any) => { return {date: new Date(day["date"] * 1000), attend: day["attend"], instruct: day["instruct"], transport: day["transport"], supervise: day["supervise"], notes: day["notes"]};});
+    }
 
     let people: Map<number, string> = $state(new Map());
 
     get_people_names().then((p) => {
         people = p;
-        days = [
-            {date: new Date(2026, 0, 2), instruct: [1, 2], transport: [4, 5, 6], supervise: [10], notes: undefined },
-            {date: new Date(2026, 0, 3), instruct: [8], transport: [], supervise: [1], notes: undefined },
-            {date: new Date(2026, 0, 4), instruct: [], transport: [30], supervise: [18, 19, 20], notes: "Long kinda note because something serious happened at the airfield that caused some significant problems for EUGC including the agreement" },
-            {date: new Date(2026, 0, 9), instruct: [], transport: [6], supervise: [], notes: undefined },
-            {date: new Date(2026, 0, 10), instruct: [16], transport: [], supervise: [], notes: "Cancelled due to weather" },
-            {date: new Date(2026, 0, 11), instruct: [17], transport: [], supervise: [], notes: undefined },
-        ];
     });
+    get_flying_days().then(fd => {
+        days = fd;
+    });
+
+    function validate_number(event: Event & {currentTarget: EventTarget & HTMLInputElement}, day: number, transport_idx: number) {
+        let value = event.currentTarget.value;
+        let input = event.currentTarget;
+        input.value = validate_float_string(value);
+        days[day].transport[transport_idx][1] = input.value === "" ? 0 : Number.parseInt(input.value);
+    }
     // const max = 3;
 </script>
 
@@ -96,9 +106,15 @@
         <tr>
             <td>Transporting</td>
             {#each day.transport as transportor, r_idx}
-                <td><PersonInput bind:person={days[day_idx].transport[r_idx]} {people} onchange={() => { if (days[day_idx].transport[r_idx] < 0) { days[day_idx].transport.splice(r_idx, 1); } }} /></td>
+                <td><PersonInput bind:person={days[day_idx].transport[r_idx][0]} {people} onchange={() => { if (days[day_idx].transport[r_idx][0] < 0) { days[day_idx].transport.splice(r_idx, 1); } }} /></td>
             {/each}
-            <td><button onclick={() => { day.transport.push(-1); }}>+</button></td>
+            <td><button onclick={() => { day.transport.push([-1, 0]); }}>+</button></td>
+        </tr>
+        <tr>
+            <td>Spaces</td>
+            {#each day.transport as transportor, r_idx}
+                <td><input type="text" style="width: 48px;" value="{transportor[1]}" oninput={(e) => validate_number(e, day_idx, r_idx)} /></td>
+            {/each}
         </tr>
         <tr>
             <td>Supervising</td>
@@ -108,8 +124,16 @@
             <td><button onclick={() => { day.supervise.push(-1); }}>+</button></td>
         </tr>
         <tr>
+            <td>Attending</td>
+            {#each day.attend as attendor, r_idx}
+                <td><PersonInput bind:person={days[day_idx].attend[r_idx]} {people} onchange={() => { if (days[day_idx].attend[r_idx] < 0) { days[day_idx].attend.splice(r_idx, 1); } }} /></td>
+            {/each}
+            <td><button onclick={() => { day.attend.push(-1); }}>+</button></td>
+        </tr>
+        <tr><td>Attendance</td><td>{day.attend.length}/{day.transport.reduce((a, b) => a + b[1], 0)}</td></tr>
+        <tr>
             <td>Notes</td>
-            <td colspan="10">{day.notes === undefined ? "None" : day.notes}</td>
+            <td style="width: 0px;" colspan="10">{day.notes === undefined ? "None" : day.notes}</td>
         </tr>
     </tbody></table>
 {/each}

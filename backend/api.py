@@ -1,4 +1,4 @@
-from main import ingest_signups, read_excel
+from main import ingest_signups, read_excel, list_flying_days, get_flying_day
 import datetime
 import main
 from flask import Flask, flash, request, redirect, url_for
@@ -36,9 +36,10 @@ def user_loader(id):
     db = get_db()
     cur = db.cursor()
     res = cur.execute("select * from user_accounts where person = ?", (int(id),))
-    return UserAccount(*next(res))
-
-
+    try:
+        return UserAccount(*next(res))
+    except StopIteration:
+        return None
 
 @app.get("/api/login")
 def api_ogin():
@@ -187,6 +188,14 @@ def list_people():
 
     return {"rows": rows}
 
+@app.route("/api/v1/get-flying-days")
+@flask_login.login_required
+def get_flying_days():
+    db = get_db()
+    ids = list_flying_days(db)
+    days = [get_flying_day(db, id).to_json() for id in ids]
+    return {"rows": days}
+
 @app.route("/api/v1/list_signups")
 @flask_login.login_required
 def list_signups():
@@ -194,7 +203,28 @@ def list_signups():
     cur = db.cursor()
     rows = list(cur.execute("select * from signups"))
     return {"rows": rows}
-    
+
+@app.route("/api/v1/list_briefings")
+@flask_login.login_required
+def list_briefings():
+    db = get_db()
+    cur = db.cursor()
+    rows = list(cur.execute("select * from briefings order by date desc"))
+    return {"rows": rows}
+
+@app.post("/api/v1/add-briefing")
+@flask_login.login_required
+def add_briefing():
+    db = get_db()
+    cur = db.cursor()
+    data = request.get_json()
+    assert "person" in data
+    assert "date" in data
+    assert "score" in data
+    rows = list(cur.execute("insert into briefings (date, person, score) values (?, ?, ?) returning *", (data["date"], data["person"], data["score"])))
+    assert len(rows) == 1
+    db.commit()
+    return list(rows[0])
 
 @app.route("/api/v1/availability_form", methods=["POST"])
 @flask_login.login_required

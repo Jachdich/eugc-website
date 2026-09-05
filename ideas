@@ -15,13 +15,21 @@ keep track of why we didn't fly on particular days
 # handle multiple/changing emails/phones
 
 essential:
-	- login
+	x login
+	- register/add accounts
 	- add yourself or others to org
-	- modify cells in db
+	/ modify cells in db
+	- adding new members manually
+	- store org in db properly!!! difficult
+	- store ranked choice per day cells better/at all
 
 nice:
 	- better ctrl+f on db
 	- signing up twice overwrites previous signup, warns, and keeps old one for reference
+	- clean up the damned API
+	- slots in org auto display as green in member list if they are within limits
+	- transfer ranked people from member list to org
 
 bugs:
 	- deleting number cells in db sets them to zero even when they should disappear
+	- working on: flying days, doesnt display instruct or supervise

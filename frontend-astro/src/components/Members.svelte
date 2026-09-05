@@ -1,5 +1,7 @@
 <script lang="ts">
 
+    import { validate_float_string } from "./util";
+
     const RowIx = {
         Id: 0,
         Name: 1,
@@ -148,22 +150,7 @@
         // }
 
         if (column == RowIx.Keenness) {
-            let has_minus = value[0] == "-";
-            if (has_minus) {
-                value = value.substring(1);
-            }
-            let value_pieces = value.split(".");
-            if (value_pieces.length == 1) {
-                value = value_pieces[0];
-            } else if (value_pieces.length == 2) {
-                value = value_pieces.join(".");
-            } else {
-                value = value_pieces[0] + "." + value_pieces[1] + value_pieces.slice(2).join("");
-            }
-            value = value.replace(/[^0-9\.]/g, '');
-            if (has_minus) {
-                value = "-" + value;
-            }
+            value = validate_float_string(value);
         }
 
         input.value = value;
@@ -259,46 +246,68 @@
         return value.toString();
     }
 
-    function serialise_cell(row: Row, column: number): string {
+    function serialise_cell(row: Row, column: number): [string, string] {
         switch (column) {
-            case RowIx.Id: return row.cells[column].toString();
-            case RowIx.Name: return row.cells[column];
+            case RowIx.Id:             return [row.cells[column].toString(), ""];
+            case RowIx.Name:           return [row.cells[column], ""];
             case RowIx.Notes: {
                 let notes = row.cells[column];
-                return notes === null ? "" : notes;
+                return [notes === null ? "" : notes, ""];
             }
-            case RowIx.ENumber: return row.cells[RowIx.ENumber] === null ? "" : "E" + row.cells[RowIx.ENumber].toString();
-            case RowIx.Emails: return row.cells[column].join(",");
-            case RowIx.Phones: return row.cells[column].join(",");
-            case RowIx.NumSignups: return row.cells[column].toString();
-            case RowIx.NumFlyingDays: return row.cells[column].toString();
+            case RowIx.ENumber:        return [row.cells[RowIx.ENumber] === null ? "" : "E" + row.cells[RowIx.ENumber].toString(), ""];
+            case RowIx.Emails:         return [row.cells[column].join(","), ""];
+            case RowIx.Phones:         return [row.cells[column].join(","), ""];
+            case RowIx.NumSignups:     return [row.cells[column].toString(), ""];
+            case RowIx.NumFlyingDays:  return [row.cells[column].toString(), ""];
             case RowIx.BriefingScore: {
                 let score = row.cells[column];
-                return score === null ? "" : score.toString();
+                let cls = "";
+                if (score !== null) {
+                    if (score <= 0) {
+                        cls = "black";
+                    } else if (score < 2) {
+                        cls = "red";
+                    } else if (score < 3) {
+                        cls = "amber";
+                    } else if (score < 4) {
+                        cls = "green";
+                    }
+                }
+                return [score === null ? "" : score.toString(), cls];
             }
             case RowIx.Keenness: {
                 let score = row.cells[column];
-                return score === null ? "" : score.toString();
+                return [score === null ? "" : score.toString(), ""];
             }
             case RowIx.BriefingDate: {
                 let date_str = "";
                 const briefing_date = row.cells[RowIx.BriefingDate];
+                let cls = "";
                 if (briefing_date !== null) {
                     const date = new Date(briefing_date * 1000);
-                    const d = date.getDate();
-                    const m = date.getMonth();
-                    const y = date.getFullYear();
-                    date_str = `${d}/${m}/${y}`;
+                    date_str = date.toLocaleDateString();
+                    let ms_since = (+new Date()) - briefing_date * 1000;
+                    let s_since = ms_since / 1000;
+                    let days_since = s_since / 60 / 60 / 24;
+                    if (days_since < 30) {
+                        cls = "green";
+                    } else if (days_since < 60) {
+                        cls = "yellow";
+                    } else if (days_since < 90) {
+                        cls = "amber";
+                    } else {
+                        cls = "red";
+                    }
                 }
-                return date_str;
+                return [date_str, cls];
             }
-            case RowIx.AvailFri: return to_string_empty_if_null(row.cells[column]);
-            case RowIx.AvailSat: return to_string_empty_if_null(row.cells[column]);
-            case RowIx.AvailSun: return to_string_empty_if_null(row.cells[column]);
-            case RowIx.DaySinceFly:    return to_string_empty_if_null(row.cells[column]);
-            case RowIx.SignupSinceFly: return to_string_empty_if_null(row.cells[column]);
+            case RowIx.AvailFri:       return [to_string_empty_if_null(row.cells[column]), ""];
+            case RowIx.AvailSat:       return [to_string_empty_if_null(row.cells[column]), ""];
+            case RowIx.AvailSun:       return [to_string_empty_if_null(row.cells[column]), ""];
+            case RowIx.DaySinceFly:    return [to_string_empty_if_null(row.cells[column]), ""];
+            case RowIx.SignupSinceFly: return [to_string_empty_if_null(row.cells[column]), ""];
         }
-        return "Unknown Column";
+        return ["Unknown Column", ""];
     }
     
 </script>
@@ -319,8 +328,8 @@
             {#each table_filtered as row, row_index}
                 <tr class="{row_index % 2 == 0 ? 'even-row' : 'odd-row'}">
                     {#each COL_INFOS as info}
-                        {@const serialised_value = serialise_cell(row, info.idx)}
-                        <td>
+                        {@const [serialised_value, style_class] = serialise_cell(row, info.idx)}
+                        <td class={style_class}>
                             <input
                                 class="item"
                                 value={serialised_value}
@@ -352,6 +361,11 @@
     }
     input {
         background-color: inherit;
+        color: #222288;
+    }
+
+    input:disabled {
+        color: #222222;
     }
 
     .even-row {
@@ -370,6 +384,23 @@
         min-width: 100%;
         padding: 0px;
         margin: 0px;
+    }
+
+    .red {
+        background-color: #ff8f8f;
+    }
+
+    .amber {
+        background-color: #ffdf8f;
+    }
+    .yellow {
+        background-color: #ffff8f;
+    }
+    .green {
+        background-color: #8fff8f;
+    }
+    .black {
+        background-color: #888888;
     }
 
 </style>

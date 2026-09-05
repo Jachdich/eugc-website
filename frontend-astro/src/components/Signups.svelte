@@ -1,5 +1,6 @@
 <script lang="ts">
     import { FRIDAY, get_people_names, SATURDAY, SUNDAY } from "./api";
+    import "./table.css";
     type Signup = [number, number, Date, boolean, boolean, number, boolean, string];
     let signups: Signup[] = $state([]);
 
@@ -59,24 +60,3 @@
     </tbody>
 
 </table>
-
-<style>
-    table {
-        border-collapse: collapse;
-        border: 1px solid black;
-        margin: 3px;
-        font-size: 12px;
-    }
-
-    th, td {
-        border: 1px solid black;
-        padding: 2px;
-    }
-
-    .even-row {
-        background-color: #ededed;
-    }
-    .odd-row {
-        background-color: #ffffff;
-    }
-</style>

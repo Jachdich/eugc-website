@@ -19,11 +19,11 @@
   <ul>
     <li><a href="/">Home</a></li>
     <li><a href="/gettingstarted">Getting Started</a></li>
-    <li><a href="/">What is Gliding?</a></li>
-    <li><a href="/">Trial Lessons</a></li>
-    <li><a href="/">Training</a></li>
-    <li><a href="/">Comps & Trips</a></li>
-    <li><a href="/">FAQs</a></li>
+    <li><a href="/intro">What is Gliding?</a></li>
+    <li><a href="/trial">Trial Lessons</a></li>
+    <li><a href="/training">Training</a></li>
+    <li><a href="/comps">Comps & Trips</a></li>
+    <li><a href="/faq">FAQs</a></li>
     <li><a href="/contact">Contact</a></li>
     {#if logged_in}
       <li style="list-style-type: none; padding: 10px 0px">Database</li>
