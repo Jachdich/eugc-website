@@ -318,9 +318,9 @@ def get_flying_day(db, id: int) -> FlyingDay:
     cur = db.cursor()
     date, notes = next(cur.execute("select date, notes from flying_days where id = ?", (id,)))
     day = FlyingDay(id, datetime.datetime.fromtimestamp(date), [], [], [], [], notes)
-    day.instruct = list(cur.execute("select person from flying_days_instructors where flying_day = ?", (id,)))
-    day.supervise = list(cur.execute("select person from flying_days_supervisors where flying_day = ?", (id,)))
-    day.attend = list(cur.execute("select person from flying_days_people where flying_day = ?", (id,)))
+    day.instruct = [i[0] for i in cur.execute("select person from flying_days_instructors where flying_day = ?", (id,))]
+    day.supervise = [i[0] for i in cur.execute("select person from flying_days_supervisors where flying_day = ?", (id,))]
+    day.attend = [i[0] for i in cur.execute("select person from flying_days_people where flying_day = ?", (id,))]
     day.transport = list(cur.execute("select person, spaces from flying_days_transporters where flying_day = ?", (id,)))
     return day
 

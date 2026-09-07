@@ -196,6 +196,8 @@ def get_flying_days():
     days = [get_flying_day(db, id).to_json() for id in ids]
     return {"rows": days}
 
+# @app.post("/api/v1/update-flying-day-")
+
 @app.route("/api/v1/list_signups")
 @flask_login.login_required
 def list_signups():
