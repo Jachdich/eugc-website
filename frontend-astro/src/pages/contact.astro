@@ -3,19 +3,60 @@ import BasePage from '../layouts/BasePage.astro';
 ---
 
 <BasePage>
-<h3>Freshers' Week</h3>
-We will have a stand at the sports fair on Monday where you can come and talk to us. We'll also be signing people up for trial lessons during the fair.
+    <div class="con-content">
+        <h3>Freshers' Week</h3>
+        <p>
+            We will have a stand at the sports fair on Monday where you can come and talk to us. 
+            We'll also be signing people up for trial lessons during the fair.
+        </p>
 
-<h3>Mailing List</h3>
-<p>The gliding club mailing list is the main route of communication, where weekly flying is organised and announcements are made. To subscribe, email <a href="mailto:sympa@mlist.is.ed.ac.uk">sympa@mlist.is.ed.ac.uk</a> with the text "subscribe gliding Firstname Lastname" (withot quotes) in the body of the message, where, of course, you substitute your first and last name.</p>
+        <h3>Mailing List</h3>
+        <p>The gliding club mailing list is the main route of communication, where weekly flying is organised and announcements are made. 
+            To subscribe, email <a href="mailto:sympa@mlist.is.ed.ac.uk">sympa@mlist.is.ed.ac.uk</a> with the text "subscribe gliding Firstname Lastname" (withot quotes) in the body of the message, where, of course, you substitute your first and last name.</p>
 
-<h3>Mail</h3>
-<p>Snail mail should be directed at: Edinburgh University Gliding Club, Sports Union Office, 48 Pleasance, Edinburgh EH8 9TJ</p>
+        <h3>Mail</h3>
+        <p>Snail mail should be directed at: Edinburgh University Gliding Club, Sports Union Office, 48 Pleasance, Edinburgh EH8 9TJ</p>
 
-<h3>Email</h3>
-<p>You can email the President or Secretary, for example to request trial flight information, at <a href="mailto:gliding@ed.ac.uk">gliding@ed.ac.uk</a>.</p>
+        <h3>Email</h3>
+        <p>
+            You can email the President or Secretary, for example to request trial flight information, 
+            at <a href="mailto:gliding@ed.ac.uk">gliding@ed.ac.uk</a>.
+        </p>
 
-<h3>WhatsApp</h3>
-<p>You can join the WhatsApp group chat for EUGC related matters <a href="https://chat.whatsapp.com/H8miD7nqOmc3K6WmqeG3St?mode=ems_copy_t">here</a>. We sometimes organise last minute flying, curries, and trips through the WhatsApp group.</p>
-
+        <h3>WhatsApp</h3>
+        <p>
+            You can join the WhatsApp group chat for EUGC related matters <a href="https://chat.whatsapp.com/H8miD7nqOmc3K6WmqeG3St?mode=ems_copy_t">here</a>. 
+            We sometimes organise last minute flying, curries, and trips through the WhatsApp group.
+        </p>
+    </div>
 </BasePage>
+
+<style>
+    .con-content {
+        margin-left: 10%;
+        margin-right: 10%;
+
+        margin-top: 96px;
+        margin-bottom: 96px;
+
+        text-align: justify;
+    }
+    .con-content h1 {
+        margin-top: 48px;
+    }
+
+    a {
+		text-decoration: none;
+		color: var(--col-accent);
+	}
+
+    .img-banner {
+        background-image: url("../assets/training.jpeg");
+        background-size: cover;
+
+        width: 100%;
+        height: 500px;
+
+        border-radius: 8px;
+    }
+</style>

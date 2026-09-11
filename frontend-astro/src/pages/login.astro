@@ -5,32 +5,69 @@ import BasePage from '../layouts/BasePage.astro';
 
 <BasePage>
   <script>
+    async function submit(e: Event) {
+        e.preventDefault();
 
-async function submit(e: Event) {
-    e.preventDefault();
-
-    const id_input = document.getElementById("id");
-    const password_element = document.getElementById("password");
-    const id = Number.parseInt(id_input.value);
-    const password = password_element.value;
-    let response = await fetch("/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id, password: password})});
-    if (response.status == 200) {
-        window.location.href = "/gettingstarted";
-    } else {
-        window.location.href = "/login-failure";
+        const id_input = document.getElementById("id");
+        const password_element = document.getElementById("password");
+        const id = Number.parseInt(id_input.value);
+        const password = password_element.value;
+        let response = await fetch("/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id, password: password})});
+        if (response.status == 200) {
+            window.location.href = "/gettingstarted";
+        } else {
+            window.location.href = "/login-failure";
+        }
     }
-}
-const form = document.getElementById("form");
-form.onsubmit = submit;
-
+    const form = document.getElementById("form");
+    form.onsubmit = submit;
   </script>
-  <form id="form">
-    <label for="id">User ID</label>
-    <input type="text" id="id" />
-    <br>
-    <label for="password">Password</label>
-    <input type="password" id="password"/>
-    <br>
-    <input type="submit" />
-  </form>
+  
+  <div class="con-content">
+	<div id="form" class="con-form">
+		<label for="id">User ID</label>
+		<input type="text" id="id" />
+		<br>
+		<label for="password">Password</label>
+		<input type="password" id="password"/>
+		<br>
+		<input type="submit" />
+	</div>
+  </div>
 </BasePage>
+
+
+<style>
+  a {
+    text-decoration: none;
+    color: var(--col-accent);
+  }
+  img {
+      border-radius: 8px;
+  }
+
+  .con-form {
+	display: flex;
+	flex-direction: column;
+	
+	gap: 12px;
+  }
+
+  .con-content {
+      margin-left: 30%;
+      margin-right: 30%;
+
+      margin-top: 96px;
+
+      text-align: justify;
+  }
+  .con-content h1 {
+      margin-top: 48px;
+  }
+  .con-content h2 {
+      margin-top: 48px;
+  }
+
+  
+
+</style>
