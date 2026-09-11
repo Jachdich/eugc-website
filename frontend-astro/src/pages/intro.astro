@@ -1,0 +1,167 @@
+---
+import BasePage from "../layouts/BasePage.astro";
+---
+
+<BasePage>
+  <div class="con-content">
+    <h1>What is Gliding?</h1>
+
+    <p>Gliding is flying a plane without an engine - soaring for hours on end, using nothing but the power of the air. 
+        This is the closest you will get to being a bird.
+        <br><br>
+        It can be as peaceful or exciting as you want it to be - float silently over the beautiful Scottish countryside, 
+        admiring the view of Edinburgh one way and the Highlands the other, or turn the your whole world upside down by doing aerobatics!
+        <br><br>
+        After the initial challenge of learning to fly, you will learn to soar invisible currents of rising air to great heights and travel hundreds of miles around the country.
+        These rising air currents are known as "lift" and are what make gliding so fascinating.
+        <br><br>
+        Although gliders are very efficient, they will eventually sink back to Earth. 
+        However, if a glider is flown in lift where the air is going up faster than the glider is going down, it can stay airborne indefinitely.
+    </p>
+
+    <h2>Hill Lift</h2>
+    <div class="con-text-and-img">
+        <div class="con-textbox">
+            When air blows against a slope, it is pushed upwards. 
+            A glider can therefore stay airborne for as long as the wind blows by flying along the edge of the hill. 
+            We fly at Portmoak which has 2 hills nearby. 
+            This means that your first flight will normally involve hill soaring.
+        </div>
+        <div class="con-img-captioned">
+            <!-- <div class="con-img" style="background-image: url('src/assets/bishop_hill_under_cloud.jpeg');"/> -->
+            <img src="src/assets/bishop_hill_under_cloud.jpeg">
+            <span>Hill under cloud</span>
+        </div>
+    </div>
+
+    <h2>Thermal Lift</h2>
+    <div class="con-text-and-img">
+        <div class="con-textbox">
+            When the sun shines on the ground, some parts will warm up more than others.
+            This means that bubbles of air called thermals will rise from the warmer parts. 
+            Gliders can fly great distances by circling in a thermal to gain height and then gliding to the next one. 
+            Many birds (especially predatory birds) use thermals to stay in the air. 
+            This is why they are often seen flying round and round without flapping. 
+            Thermals are often marked on suitable days by a fluffy cloud with a relatively flat bottom. 
+            These are known as Cumulus clouds and can even form long "streets" 
+            which allow the glider to fly long distances without having to turn while climbing and therefore fly very fast.
+        </div>
+        <div class="con-img-captioned">
+            <!-- <div class="con-img" style="background-image: url('src/assets/over_loch_leven_in_piglet.jpeg');"/> -->
+            <img src="src/assets/over_loch_leven_in_piglet.jpeg" style="width: 90%">
+            <span>Thermals over Loch Leven</span>
+        </div>
+    </div>
+
+    <h2>Wave Lift</h2>
+    <div class="con-text-and-img">
+        <div class="con-textbox">
+            When the air blows over hills such as those in the highlands it rises to 
+            get over the hills and then sinks down the other side. 
+            Under certain conditions, this wave-like motion continues for hundreds of
+            miles downwind of the hill and to heights which are many times greater than that of the original hill. 
+            By flying in the upward part of the wave, gliders can climb to over 40,000 feet. 
+            Often the air is so smooth that the glider will fly itself and you can just sit there laughing, 
+            watching the ground and even the clouds fall away from you. 
+            Wave lift is very common in Scotland during the winter months — make sure you experience it
+            during your time at Edinburgh.
+        </div>
+        <div class="con-img-captioned">
+            <!-- <div class="con-img" style="background-image: url('src/assets/diagram.jpg');"/> -->
+            <img src="src/assets/diagram.jpg">
+            <span>Hill under cloud</span>
+        </div>
+    </div>
+
+    <p style="margin-top: 48px;">
+        No doubt the above will have persuaded you to take a <a href="/trial">trial lesson</a>. 
+        If you still need more inspiration, have a look at our photo album.
+        Don't miss this golden opportunity!
+    </p>
+  </div>
+</BasePage>
+
+<style>
+    a {
+		text-decoration: none;
+		color: var(--col-accent);
+	}
+    img {
+        border-radius: 8px;
+    }
+
+    .con-content {
+        margin-left: 10%;
+        margin-right: 10%;
+
+        margin-top: 96px;
+
+        text-align: justify;
+
+        max-width: 100%;
+    }
+    .con-content h1 {
+        margin-top: 48px;
+    }
+    .con-content h2 {
+        margin-top: 48px;
+    }
+
+
+    @media (orientation: landscape) {
+        .con-text-and-img {
+            display: flex;
+            flex-direction: row;
+
+            gap: 32px;
+        }
+        .con-textbox {
+            width: 50%;
+        }
+
+        .con-img-captioned {
+            width: 50%;
+
+            /* height: 100%; */
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 8px;
+        }
+    }
+
+    @media (orientation: portrait) {
+        .con-text-and-img {
+            display: flex;
+            flex-direction: column;
+
+            gap: 32px;
+        }
+        .con-textbox {
+            width: 100%;
+        }
+
+        .con-img-captioned {
+            width: 100%;
+
+            /* height: 100%; */
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 8px;
+        }
+    }
+
+    .con-img {
+        background-size: cover;
+        background-position: center;
+        
+        height: 90%;
+        width: 100%;
+    }
+    .con-img-captioned span {
+        font-size: 12px;
+    }
+</style>

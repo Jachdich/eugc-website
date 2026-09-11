@@ -1,9 +1,71 @@
-
 ---
 import BasePage from '../layouts/BasePage.astro';
 ---
 
+
 <BasePage>
+    <div class="con-banner">
+        <h1>Edinburgh University Gliding Club</h1>
+    </div>
+    <div class="con-content">
+        <h1>Come Flying!</h1>
+        <p>
+            Edinburgh University Gliding Club gets you airborne all year round!
+            Find out all about <a href="/training">joining the club and trial flights</a> and read up on <a href="/faq">frequently asked questions</a>. 
+            Subscribe to our <a href="/contact">mailing list</a> for weekly flying organisation. 
+            Visit our <a href="/gettingstarted">getting started page</a> for all the information about how to buy membership, sign up, and come flying!
+        </p>
 
-
+        <h1>About Gliding</h1>
+        <p>
+            Gliders or sailplanes are aircraft with wide, fixed wings. 
+            Thanks to rising air, a glider with one or two pilots can silently soar for hours, play with clouds and travel long distances, out-climbing the strongest birds. 
+            Gliding is a safe and affordable way to fly, both competitively and for fun. 
+        </p>
+    </div>
 </BasePage>
+
+
+<style>
+    .con-banner {
+        width: 100%;
+        height: 320px;
+
+        background-image: url(../assets/banner.jpeg);
+        background-position: center;
+        background-position-y: -210px;
+        background-size: cover;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        border-bottom: 6px var(--col-accent) solid;
+    }
+    .con-banner h1 {
+        margin: 0;
+
+        font-family: "Lexend", sans-serif;
+        font-size: 56px;
+        
+        text-align: center;
+
+        text-shadow: -2px -2px 2px rgba(255,255,255,.1), 2px 2px 2px rgba(0,0,0,.5);
+    }
+
+    .con-content {
+        margin-left: 10%;
+        margin-right: 10%;
+
+        margin-top: 48px;
+    }
+    .con-content h1 {
+        margin-top: 48px;
+    }
+
+    a {
+		text-decoration: none;
+		color: var(--col-accent);
+	}
+</style>

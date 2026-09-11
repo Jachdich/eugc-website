@@ -8,36 +8,85 @@ import Nav from "../components/Nav.svelte";
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet">
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>Edinburgh University Gliding Club</title>
 	</head>
 	<body>
-    <div id="whole-page">
-      <div id="nav">
+    <div class="con-page">
+      <div class="con-nav">
         <Nav client:load />
       </div>
-      <div id="main-content">
-    		<slot />
+      <div class="con-content">
+    	<slot />
       </div>
     </div>
 	</body>
 </html>
 
 <style>
+	:root {
+		/* https://lospec.com/palette-list/cc-29 */
+
+		--col-text-white: #f2f0e5;
+		--col-text-black: #212123;
+		
+		--col-panel-0: #212123;
+		--col-panel-1: #45444f;
+		--col-panel-2: #555461;
+		--col-panel-3: #646365;
+
+		--col-accent: #4b80ca;
+	}
+
 	html,
 	body {
 		margin: 0;
 		width: 100%;
 		height: 100%;
-    font-family: sans-serif;
+
+		font-family: "Inter", sans-serif;
+		color: var(--col-text-white);
 	}
 
-  #main-content {
-    max-width: 1024px;
-  }
+	@media (orientation: landscape) {
+		.con-page {
+			display: flex;
+			flex-direction: row;
 
-  #whole-page {
-    display: flex;
-    flex-direction: row;
-  }
+			background-color: var(--col-panel-0);
+		}
+
+		.con-content {
+			margin: 0;
+
+			width: 100%;
+		}
+
+		.con-nav {
+			margin: 0;
+
+			min-width: 320px;
+			max-width: 320px;
+			min-height: 100vh;
+			max-height: 100%;
+		}
+	}
+
+	@media (orientation: portrait) {
+		.con-page {
+			display: flex;
+			flex-direction: column;
+
+			background-color: var(--col-panel-0);
+		}
+
+		.con-nav {
+			margin: 0;
+
+			width: 100%;
+		}
+	}
 </style>
