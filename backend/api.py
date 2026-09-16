@@ -1,4 +1,4 @@
-from main import ingest_signups, read_excel, list_flying_days, get_flying_day, FlyingDay, add_flying_day
+from main import ingest_signups, read_excel, list_flying_days, get_flying_day, FlyingDay, add_flying_day, make_account
 import datetime
 import main
 from flask import Flask, flash, request, redirect, url_for
@@ -35,20 +35,32 @@ class UserAccount(flask_login.UserMixin):
 def user_loader(email):
     db = get_db()
     cur = db.cursor()
-    id = cur.execute("select * from emails")
-    res = cur.execute("select * from user_accounts where person = ?", (int(id),))
+    users = list(cur.execute("select id, password_hash from people where email = ?", (email,)))
+    if len(users) == 0:
+        return None
+    assert len(users) == 1, ">1 users with the same email"
+    user = users[0]
     try:
-        return UserAccount(*next(res))
+        return UserAccount(*user)
     except StopIteration:
         return None
 
-@app.get("/api/login")
-def api_ogin():
-    return """<form method=post>
-      Email: <input name="email"><br>
-      Password: <input name="password" type=password><br>
-      <button>Log In</button>
-    </form>"""
+@app.post("/api/v1/register")
+def api_register():
+    data = request.get_json()
+    db = get_db()
+    
+    new_account_id = make_account(db, data["email"], data["phone"], data["name"], data["password"], data["tourist"])
+    if new_account_id is None:
+        return flask.Response(status=409)
+    print(new_account_id)
+    user = user_loader(new_account_id)
+    if user is None or not password_hasher.verify(user.password_hash, data["password"]):
+        return flask.Response(status=403)
+
+    flask_login.login_user(user)
+    return flask.Response(status=200)
+
 
 @app.post("/api/v1/login")
 def api_login():
@@ -62,18 +74,11 @@ def api_login():
         user.password_hash = password_hasher.hash(data["password"])
         db = get_db()
         cur = db.cursor()
-        cur.execute("update user_accounts set password_hash = ? where person = ?", (user.password_hash, user.id))
+        cur.execute("update people set password_hash = ? where id = ?", (user.password_hash, user.id))
 
     flask_login.login_user(user)
+    print(flask_login.current_user)
     return flask.Response(status=200)
-
-@app.route("/api/protected")
-@flask_login.login_required
-def protected():
-    return flask.render_template_string(
-        "Logged in as: {{ user.id }}",
-        user=flask_login.current_user
-    )
 
 @app.route("/api/v1/logout")
 def logout():

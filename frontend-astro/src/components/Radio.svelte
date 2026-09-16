@@ -15,7 +15,7 @@
     {#each choices as choice}
         <div class="radio">
           <input type="radio" id="{choice}-{name}" name={name} value="{choice}" bind:group={value} />
-          <label for="{choice}-{name}">{choice}</label>
+          <label for="{choice}-{name}" class="radio-label">{choice}</label>
         </div>
     {/each}
 </div>

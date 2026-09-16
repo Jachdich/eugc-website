@@ -10,9 +10,8 @@ import BasePage from '../layouts/BasePage.astro';
 
         const id_input = document.getElementById("id");
         const password_element = document.getElementById("password");
-        const id = Number.parseInt(id_input.value);
         const password = password_element.value;
-        let response = await fetch("/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id, password: password})});
+        let response = await fetch("/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id_input.value, password: password})});
         if (response.status == 200) {
             window.location.href = "/gettingstarted";
         } else {

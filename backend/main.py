@@ -77,10 +77,10 @@ create table if not exists people (
     name text not null unique,
     e_number integer unique,
     keenness real,
-    role text,
+    role number,
     notes text,
     tourist integer not null,
-    email text not null,
+    email text not null unique,
     phone text not null,
     password_hash text
 )""")
@@ -113,8 +113,8 @@ class Tourist(Enum):
 class Person:
     id: int
     name: str
-    emails: list[str]
-    phones: list[str]
+    email: str
+    phone: str
     e_number: int | None
     keenness: float | None
     role: str | None
@@ -138,10 +138,10 @@ def find_person_by_details(db, name, email, phone) -> int | None:
     by_name = list(cur.execute("select id from people where name LIKE ?", (f"%{name}%",)))
     if len(by_name) == 1:
         return by_name[0][0]
-    by_phone = list(cur.execute("select person from phones where phone = ?", (phone,)))
+    by_phone = list(cur.execute("select id from people where phone = ?", (phone,)))
     if len(by_phone) == 1:
         return by_phone[0][0]
-    by_email = list(cur.execute("select person from emails where email = ?", (email,)))
+    by_email = list(cur.execute("select id from people where email = ?", (email,)))
     if len(by_email) == 1:
         return by_email[0][0]
 
@@ -199,9 +199,7 @@ def ingest_signups(db, data: list[tuple[any]]):
 
         person_id = find_person_by_details(db, name, email, phone)
         if person_id is None:
-            person_id = next(cur.execute("insert into people (name, tourist) values (?, ?) returning id", (name, 1)))[0]
-            cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
-            cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
+            person_id = next(cur.execute("insert into people (name, tourist, email, phone) values (?, ?, ?, ?) returning id", (name, 1, email, phone)))[0]
 
         cur.execute(
             "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes, tourist) values (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -210,17 +208,38 @@ def ingest_signups(db, data: list[tuple[any]]):
 
     db.commit()
 
+
+from argon2 import PasswordHasher
+password_hasher = PasswordHasher()
+
 def make_account(db, email, phone, name, password, tourist):
     email = email.strip()
     phone = phone.strip()
     name = name.strip()
     cur = db.cursor()
-    existing_emails = list(cur.execute("select id from people where email = ?", (email,)))
+    existing_emails = list(cur.execute("select id, password_hash from people where email = ?", (email,)))
     if len(existing_emails) > 0:
-        return
+        id, ph = existing_emails[0]
+    else:
+        id = None
+        ph = None
 
-    # hash = password_hasher.
-    
+    # case 1: user exists and has password, trying to register again
+    if id != None and ph != None:
+        return None
+
+    hash = password_hasher.hash(password)
+
+    # case 2: user already in db, but not registered (doesn't have a password yet)
+    if id != None and ph == None:
+        cur.execute("update people set password_hash = ? where id = ?", (hash, id))
+
+    # case 3: user not in db
+    if id == None:
+        id = next(cur.execute("insert into people (name, tourist, email, phone, password_hash) values (?, ?, ?, ?, ?) returning id", (name, tourist, email, phone, hash)))[0]
+
+    db.commit()
+    return id
         
 def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_days, notes, car):
     cur = db.cursor()
@@ -231,14 +250,14 @@ def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_da
     # phone = phone.strip()
 
     # person_id = find_person_by_details(db, name, email, phone)
-    if person_id is None:
-        person_id = next(cur.execute("insert into people (name, tourist, email, phone) values (?, ?, ?, ?) returning id", (name, tourist, email, phone)))[0]
+    # if person_id is None:
+    #     person_id = next(cur.execute("insert into people (name, tourist, email, phone) values (?, ?, ?, ?) returning id", (name, tourist, email, phone)))[0]
 
-    cur.execute("update people set tourist = ? where id = ?", (person_id, tourist))
+    # cur.execute("update people set tourist = ? where id = ?", (person_id, tourist))
 
     cur.execute(
-        "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes, tourist) values (?, ?, ?, ?, ?, ?, ?, ?)",
-        (person_id, submit_time, reported_trial, briefing, available_days, car, notes, tourist)
+        "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes) values (?, ?, ?, ?, ?, ?, ?)",
+        (person_id, submit_time, reported_trial, briefing, available_days, car, notes)
     )
 
     db.commit()
@@ -273,15 +292,13 @@ def num_signups(db, person):
 def person_info(db, person_id: int) -> Person | None:
     cur = db.cursor()
     # take the latest briefing for each person
-    result = list(cur.execute("select p.id, p.name, p.e_number, p.keenness, p.role, p.notes, p.tourist, b.date, b.score from people as p left join briefings as b on p.id = b.person where p.id = ? order by b.date desc limit 1", (person_id,)))
+    result = list(cur.execute("select p.id, p.name, p.email, p.phone, p.e_number, p.keenness, p.role, p.notes, p.tourist, b.date, b.score from people as p left join briefings as b on p.id = b.person where p.id = ? order by b.date desc limit 1", (person_id,)))
     if len(result) == 0:
         return None
     # assert not (len(result) > 1), "More than one person for the same ID"
     p = result[0]
-    emails = [i[0] for i in cur.execute("select email from emails where person = ?", (p[0],))]
-    phones = [i[0] for i in cur.execute("select phone from phones where person = ?", (p[0],))]
     print(p)
-    return Person(p[0], p[1], emails, phones, p[2], p[3], p[4], p[5], p[6], datetime.datetime.fromtimestamp(p[7]) if p[7] is not None else None, p[8])
+    return Person(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], datetime.datetime.fromtimestamp(p[9]) if p[9] is not None else None, p[10])
 
 def num_flying_days(db, person):
     cur = db.cursor()
@@ -435,8 +452,8 @@ for id in [i[0] for i in cur.execute("select id from people order by (select cou
     print(info)
     cols[0].append(str(info.name))
     cols[1].append(("E" + str(info.e_number)) if info.e_number is not None else "")
-    cols[2].append(", ".join(info.emails))
-    cols[3].append(", ".join(info.phones))
+    cols[2].append(info.email)
+    cols[3].append(info.phone)
     cols[4].append(str(num_signups(con, id)))
     cols[5].append(str(num_flying_days(con, id)))
     cols[6].append(str(info.keenness) if info.keenness is not None else "")
