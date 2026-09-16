@@ -12,13 +12,24 @@
         supervise: number[],
         attend: number[],
         notes: string | undefined,
+        id: number
     }
     let days: Day[] = $state([]);
 
     export async function get_flying_days(): Promise<Array<Day>> {
         let table = await fetch("/api/v1/get-flying-days");
         let json = await table.json();
-        return json["rows"].map((day: any) => { return {date: new Date(day["date"] * 1000), attend: day["attend"], instruct: day["instruct"], transport: day["transport"], supervise: day["supervise"], notes: day["notes"]};});
+        return json["rows"].map((day: any) => {
+            return {
+                date: new Date(day["date"] * 1000),
+                attend: day["attend"],
+                instruct: day["instruct"],
+                transport: day["transport"],
+                supervise: day["supervise"],
+                notes: day["notes"],
+                id: day["id"],
+            };
+        });
     }
 
     let people: Map<number, string> = $state(new Map());
@@ -36,6 +47,31 @@
         input.value = validate_float_string(value);
         days[day].transport[transport_idx][1] = input.value === "" ? 0 : Number.parseInt(input.value);
     }
+
+    function net_update(day_idx: number) {
+        let day = days[day_idx];
+        let json = {
+            date: (+day.date) / 1000.0,
+            attend: day.attend,
+            instruct: day.instruct,
+            transport: day.transport,
+            supervise: day.supervise,
+            notes: day.notes,
+            id: day.id,
+        };
+        fetch("/api/v1/update-flying-day", {
+          method: "POST",
+          body: JSON.stringify(json),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8"
+          }
+        }).then((response) => {
+            if (response.status != 200) {
+                alert("Server sent error code: " + response.status);
+            }
+        });
+    }
+
     // const max = 3;
 </script>
 
@@ -98,14 +134,14 @@
         <tr>
             <td>Instructing</td>
             {#each day.instruct as instructor, r_idx}
-                <td><PersonInput bind:person={days[day_idx].instruct[r_idx]} {people} onchange={() => { if (days[day_idx].instruct[r_idx] < 0) { days[day_idx].instruct.splice(r_idx, 1); } }} /></td>
+                <td><PersonInput bind:person={days[day_idx].instruct[r_idx]} {people} onchange={() => { if (days[day_idx].instruct[r_idx] < 0) { days[day_idx].instruct.splice(r_idx, 1); } net_update(day_idx); }} /></td>
             {/each}
             <td><button onclick={() => { day.instruct.push(-1); }}>+</button></td>
         </tr>
         <tr>
             <td>Transporting</td>
             {#each day.transport as transportor, r_idx}
-                <td><PersonInput bind:person={days[day_idx].transport[r_idx][0]} {people} onchange={() => { if (days[day_idx].transport[r_idx][0] < 0) { days[day_idx].transport.splice(r_idx, 1); } }} /></td>
+                <td><PersonInput bind:person={days[day_idx].transport[r_idx][0]} {people} onchange={() => { if (days[day_idx].transport[r_idx][0] < 0) { days[day_idx].transport.splice(r_idx, 1); } net_update(day_idx); }} /></td>
             {/each}
             <td><button onclick={() => { day.transport.push([-1, 0]); }}>+</button></td>
         </tr>
@@ -118,14 +154,14 @@
         <tr>
             <td>Supervising</td>
             {#each day.supervise as superviseor, r_idx}
-                <td><PersonInput bind:person={days[day_idx].supervise[r_idx]} {people} onchange={() => { if (days[day_idx].supervise[r_idx] < 0) { days[day_idx].supervise.splice(r_idx, 1); } }} /></td>
+                <td><PersonInput bind:person={days[day_idx].supervise[r_idx]} {people} onchange={() => { if (days[day_idx].supervise[r_idx] < 0) { days[day_idx].supervise.splice(r_idx, 1); } net_update(day_idx); }} /></td>
             {/each}
             <td><button onclick={() => { day.supervise.push(-1); }}>+</button></td>
         </tr>
         <tr>
             <td>Attending</td>
             {#each day.attend as attendor, r_idx}
-                <td><PersonInput bind:person={days[day_idx].attend[r_idx]} {people} onchange={() => { if (days[day_idx].attend[r_idx] < 0) { days[day_idx].attend.splice(r_idx, 1); } }} /></td>
+                <td><PersonInput bind:person={days[day_idx].attend[r_idx]} {people} onchange={() => { if (days[day_idx].attend[r_idx] < 0) { days[day_idx].attend.splice(r_idx, 1); } net_update(day_idx); }} /></td>
             {/each}
             <td><button onclick={() => { day.attend.push(-1); }}>+</button></td>
         </tr>

@@ -19,6 +19,7 @@
         AvailSun: 13,
         DaySinceFly: 14,
         SignupSinceFly: 15,
+        Tourist: 16,
     } as const;
 
     const MONDAY   = 0b0000001;
@@ -36,8 +37,8 @@
             string,
             string | null,
             number,
-            string[],
-            string[],
+            string,
+            string,
             number,
             number,
             number | null,
@@ -48,6 +49,7 @@
             number | null,
             number | null,
             number | null,
+            number,
         ],
         inputs: HTMLInputElement[],
     }
@@ -61,7 +63,7 @@
                 row[11] & FRIDAY ? 0 : null,
                 row[11] & SATURDAY ? 0 : null,
                 row[11] & SUNDAY ? 0 : null,
-                row[12], row[13]
+                row[12], row[13], row[14]
             ] as any,
             inputs: [],
         }});
@@ -178,7 +180,7 @@
         } else if (column == RowIx.Notes) {
             table[row].cells[RowIx.Notes] = value == "" ? null : value;
         } else if (column == RowIx.Emails || column == RowIx.Phones) {
-            table[row].cells[column] = value.split(",").map((i) => i.trim());
+            table[row].cells[column] = value.trim();
         } else if (column == RowIx.Keenness) {
             table[row].cells[column] = value == "" ? 0 : Number.parseFloat(value);
         } else {
@@ -231,6 +233,7 @@
         {idx: RowIx.Emails,        name: "Email", width: 140, readonly: false},
         {idx: RowIx.Phones,        name: "Phone", width: 110, readonly: false},
         {idx: RowIx.Notes,         name: "Notes", width: 250, readonly: false},
+        {idx: RowIx.Tourist,       name: "Tourist", width: 20, readonly: false},
     ]
 
     function input_keypress(e: KeyboardEvent, row_index: number, col_index: number) {
@@ -255,9 +258,10 @@
                 return [notes === null ? "" : notes, ""];
             }
             case RowIx.ENumber:        return [row.cells[RowIx.ENumber] === null ? "" : "E" + row.cells[RowIx.ENumber].toString(), ""];
-            case RowIx.Emails:         return [row.cells[column].join(","), ""];
-            case RowIx.Phones:         return [row.cells[column].join(","), ""];
+            case RowIx.Emails:         return [row.cells[column], ""];
+            case RowIx.Phones:         return [row.cells[column], ""];
             case RowIx.NumSignups:     return [row.cells[column].toString(), ""];
+            case RowIx.Tourist:        return [row.cells[column].toString(), ""];
             case RowIx.NumFlyingDays:  return [row.cells[column].toString(), ""];
             case RowIx.BriefingScore: {
                 let score = row.cells[column];

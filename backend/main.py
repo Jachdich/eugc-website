@@ -22,6 +22,7 @@ create table if not exists signups (
     available_days integer not null,
     has_car boolean not null,
     notes text,
+    tourist integer not null,
     foreign key (person) references people(id)
 )""")
 
@@ -70,7 +71,6 @@ create table if not exists flying_days_supervisors (
     unique (flying_day, person)
 )""")
 
-
 cur.execute("""
 create table if not exists people (
     id integer primary key,
@@ -78,26 +78,12 @@ create table if not exists people (
     e_number integer unique,
     keenness real,
     role text,
-    notes text
+    notes text,
+    tourist integer not null,
+    email text not null,
+    phone text not null,
+    password_hash text
 )""")
-
-cur.execute("""
-create table if not exists emails (
-    id integer primary key,
-    person integer not null,
-    email text unique,
-    foreign key (person) references people(id)
-)
-""")
-
-cur.execute("""
-create table if not exists phones (
-    id integer primary key,
-    person integer not null,
-    phone text unique,
-    foreign key (person) references people(id)
-)
-""")
 
 cur.execute("""
 create table if not exists briefings (
@@ -117,14 +103,11 @@ create table if not exists legacy_info (
     foreign key (person) references people(id)
 )""")
 
-cur.execute("""
-create table if not exists user_accounts (
-    person integer primary key,
-    password_hash text not null,
-
-    foreign key (person) references people(id)
-)
-""")
+from enum import Enum
+class Tourist(Enum):
+    LearnToFly = 0
+    NotSure = 1
+    ExperienceGliding = 2
 
 @dataclass
 class Person:
@@ -136,6 +119,7 @@ class Person:
     keenness: float | None
     role: str | None
     notes: str | None
+    tourist: Tourist
 
     briefing_date: datetime.datetime | None
     briefing_score: float | None
@@ -215,34 +199,46 @@ def ingest_signups(db, data: list[tuple[any]]):
 
         person_id = find_person_by_details(db, name, email, phone)
         if person_id is None:
-            person_id = next(cur.execute("insert into people (name) values (?) returning id", (name,)))[0]
+            person_id = next(cur.execute("insert into people (name, tourist) values (?, ?) returning id", (name, 1)))[0]
             cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
             cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
 
         cur.execute(
-            "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes) values (?, ?, ?, ?, ?, ?, ?)",
-            (person_id, start.timestamp(), reported_trial, False, available_days, car, notes)
+            "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes, tourist) values (?, ?, ?, ?, ?, ?, ?, ?)",
+            (person_id, start.timestamp(), reported_trial, False, available_days, car, notes, 1)
         )
 
     db.commit()
+
+def make_account(db, email, phone, name, password, tourist):
+    email = email.strip()
+    phone = phone.strip()
+    name = name.strip()
+    cur = db.cursor()
+    existing_emails = list(cur.execute("select id from people where email = ?", (email,)))
+    if len(existing_emails) > 0:
+        return
+
+    # hash = password_hasher.
+    
         
-def ingest_one_signup(db, reported_trial, briefing, name, available_days, notes, email, phone, car):
+def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_days, notes, car):
     cur = db.cursor()
     submit_time = datetime.datetime.now().timestamp()
 
-    name = name.strip()
-    email = email.strip()
-    phone = phone.strip()
+    # name = name.strip()
+    # email = email.strip()
+    # phone = phone.strip()
 
-    person_id = find_person_by_details(db, name, email, phone)
+    # person_id = find_person_by_details(db, name, email, phone)
     if person_id is None:
-        person_id = next(cur.execute("insert into people (name) values (?) returning id", (name,)))[0]
-        cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
-        cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
+        person_id = next(cur.execute("insert into people (name, tourist, email, phone) values (?, ?, ?, ?) returning id", (name, tourist, email, phone)))[0]
+
+    cur.execute("update people set tourist = ? where id = ?", (person_id, tourist))
 
     cur.execute(
-        "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes) values (?, ?, ?, ?, ?, ?, ?)",
-        (person_id, submit_time, reported_trial, briefing, available_days, car, notes)
+        "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes, tourist) values (?, ?, ?, ?, ?, ?, ?, ?)",
+        (person_id, submit_time, reported_trial, briefing, available_days, car, notes, tourist)
     )
 
     db.commit()
@@ -274,24 +270,18 @@ def num_signups(db, person):
         count += fudge_factor[0][0]
     return count
 
-# SELECT
-#   Name,
-#   Title
-# FROM
-#   artists
-#   LEFT JOIN albums ON artists.ArtistId = albums.ArtistId
-
 def person_info(db, person_id: int) -> Person | None:
     cur = db.cursor()
     # take the latest briefing for each person
-    result = list(cur.execute("select * from people left join briefings on people.id = briefings.person where people.id = ? order by briefings.date desc limit 1", (person_id,)))
+    result = list(cur.execute("select p.id, p.name, p.e_number, p.keenness, p.role, p.notes, p.tourist, b.date, b.score from people as p left join briefings as b on p.id = b.person where p.id = ? order by b.date desc limit 1", (person_id,)))
     if len(result) == 0:
         return None
     # assert not (len(result) > 1), "More than one person for the same ID"
     p = result[0]
     emails = [i[0] for i in cur.execute("select email from emails where person = ?", (p[0],))]
     phones = [i[0] for i in cur.execute("select phone from phones where person = ?", (p[0],))]
-    return Person(p[0], p[1], emails, phones, p[2], p[3], p[4], p[5], datetime.datetime.fromtimestamp(p[7]) if p[7] is not None else None, p[9])
+    print(p)
+    return Person(p[0], p[1], emails, phones, p[2], p[3], p[4], p[5], p[6], datetime.datetime.fromtimestamp(p[7]) if p[7] is not None else None, p[8])
 
 def num_flying_days(db, person):
     cur = db.cursor()
@@ -303,7 +293,7 @@ def num_flying_days(db, person):
 
 @dataclass
 class FlyingDay:
-    id: int
+    id: int | None
     date: datetime.datetime
     supervise: list[int]
     transport: list[(int, int)]
@@ -312,7 +302,26 @@ class FlyingDay:
     notes: str | None
 
     def to_json(self):
-        return {"id": self.id, "date": self.date.timestamp(), "supervise": self.supervise, "transport": self.transport, "instruct": self.instruct, "attend": self.attend, "notes": self.notes}
+        return {
+            "id": self.id,
+            "date": self.date.timestamp(),
+            "supervise": self.supervise,
+            "transport": self.transport,
+            "instruct": self.instruct,
+            "attend": self.attend,
+            "notes": self.notes
+        }
+
+    def from_json(data):
+        return FlyingDay(
+            data.get("id"),
+            datetime.datetime.fromtimestamp(data["date"]),
+            data["supervise"],
+            [(a, b) for a, b in data["transport"]],
+            data["instruct"],
+            data["attend"],
+            data.get("notes"),
+        )
 
 def get_flying_day(db, id: int) -> FlyingDay:
     cur = db.cursor()
@@ -334,15 +343,18 @@ def last_flying_days(db, person):
 
 def add_flying_day(db, day: FlyingDay):
     cur = db.cursor()
-    day_id = next(cur.execute("insert into flying_days (date, notes) values (?,  ?) returning id", (day.date.timestamp(), day.notes)))[0]
+    if day.id is None:
+        day.id = next(cur.execute("insert into flying_days (date, notes) values (?,  ?) returning id", (day.date.timestamp(), day.notes)))[0]
+    else:
+        cur.execute("insert into flying_days (id, date, notes) values (?, ?,  ?) returning id", (day.id, day.date.timestamp(), day.notes))
     for person in day.attend:
-        cur.execute("insert into flying_days_people (flying_day, person) values (?, ?)", (day_id, person))
+        cur.execute("insert into flying_days_people (flying_day, person) values (?, ?)", (day.id, person))
     for person in day.instruct:
-        cur.execute("insert into flying_days_instructors (flying_day, person) values (?, ?)", (day_id, person))
+        cur.execute("insert into flying_days_instructors (flying_day, person) values (?, ?)", (day.id, person))
     for person, spaces in day.transport:
-        cur.execute("insert into flying_days_transporters (flying_day, person, spaces) values (?, ?, ?)", (day_id, person, spaces))
+        cur.execute("insert into flying_days_transporters (flying_day, person, spaces) values (?, ?, ?)", (day.id, person, spaces))
     for person in day.supervise:
-        cur.execute("insert into flying_days_supervisors (flying_day, person) values (?, ?)", (day_id, person))
+        cur.execute("insert into flying_days_supervisors (flying_day, person) values (?, ?)", (day.id, person))
     db.commit()
 
 def add_briefing(db, date: datetime.datetime, people_scores: list[(int, float)]):
@@ -370,12 +382,13 @@ if fresh_start:
         
             # print(f"{name!r}", e, emails, phone, signups, flying, keenness, briefing_score, briefing_date, notes)
 
-            person_id = next(cur.execute("insert into people (name, e_number, keenness, notes) values (?, ?, ?, ?) returning id", (name, e, keenness, notes)))[0]
-            for email in emails:
-                cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
+            person_id = next(cur.execute("insert into people (name, e_number, keenness, notes, tourist, email, phone) values (?, ?, ?, ?, ?, ?, ?) returning id", (name, e, keenness, notes, 1, emails[0] if len(emails) > 0 else "", phone)))[0]
+            # for email in emails:
+            #     cur.execute("insert into emails (person, email) values (?, ?)", (person_id, email))
 
-            if phone != "":
-                cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
+            # if phone != "":
+            #     cur.execute("insert into phones (person, phone) values (?, ?)", (person_id, phone))
+
             # for i in range(signups):
             #     cur.execute("insert into signups (person, completed_datetime, available_days, notes, reported_trial, attending_briefing, has_car) values (?, ?, ?, ?, ?, ?, ?)", (person_id, 0, 0, None, False, False, False))
             # for i in range(flying):
@@ -401,12 +414,12 @@ if fresh_start:
 #     info = person_info(person)
 #     print(info,num_signups(person))
 # days = [
-#     FlyingDay(0, datetime.datetime(2026, 1, 2),  [10], [[4, 1], [5, 1], [6, 1]], [1, 2], [], None),
-#     FlyingDay(0, datetime.datetime(2026, 1, 3),  [1], [], [8], [], None),
-#     FlyingDay(0, datetime.datetime(2026, 1, 4),  [18, 19, 20], [[30, 2]], [], [], "Long kinda note because something serious happened at the airfield that caused some significant problems for EUGC including the agreement"),
-#     FlyingDay(0, datetime.datetime(2026, 1, 9),  [], [[6, 4]], [], [], None),
-#     FlyingDay(0, datetime.datetime(2026, 1, 10), [], [], [16], [], "Cancelled due to weather"),
-#     FlyingDay(0, datetime.datetime(2026, 1, 11), [], [], [17], [], None),
+#     FlyingDay(None, datetime.datetime(2026, 1, 2),  [10], [[4, 1], [5, 1], [6, 1]], [1, 2], [], None),
+#     FlyingDay(None, datetime.datetime(2026, 1, 3),  [1], [], [8], [], None),
+#     FlyingDay(None, datetime.datetime(2026, 1, 4),  [18, 19, 20], [[30, 2]], [], [], "Long kinda note because something serious happened at the airfield that caused some significant problems for EUGC including the agreement"),
+#     FlyingDay(None, datetime.datetime(2026, 1, 9),  [], [[6, 4]], [], [], None),
+#     FlyingDay(None, datetime.datetime(2026, 1, 10), [], [], [16], [], "Cancelled due to weather"),
+#     FlyingDay(None, datetime.datetime(2026, 1, 11), [], [], [17], [], None),
 # ]
 
 # for day in days:

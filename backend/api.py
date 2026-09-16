@@ -1,4 +1,4 @@
-from main import ingest_signups, read_excel, list_flying_days, get_flying_day
+from main import ingest_signups, read_excel, list_flying_days, get_flying_day, FlyingDay, add_flying_day
 import datetime
 import main
 from flask import Flask, flash, request, redirect, url_for
@@ -32,9 +32,10 @@ class UserAccount(flask_login.UserMixin):
     password_hash: str
 
 @login_manager.user_loader
-def user_loader(id):
+def user_loader(email):
     db = get_db()
     cur = db.cursor()
+    id = cur.execute("select * from emails")
     res = cur.execute("select * from user_accounts where person = ?", (int(id),))
     try:
         return UserAccount(*next(res))
@@ -55,7 +56,7 @@ def api_login():
     user = user_loader(data["id"])
 
     if user is None or not password_hasher.verify(user.password_hash, data["password"]):
-        return flask.redirect(flask.url_for("login"))
+        return flask.Response(status=403)
 
     if password_hasher.check_needs_rehash(user.password_hash):
         user.password_hash = password_hasher.hash(data["password"])
@@ -183,6 +184,7 @@ def list_people():
             availability,
             days_since_last_flight,
             signups_since_last_flight,
+            person.tourist,
         ]
         rows.append(row)
 
@@ -196,7 +198,25 @@ def get_flying_days():
     days = [get_flying_day(db, id).to_json() for id in ids]
     return {"rows": days}
 
-# @app.post("/api/v1/update-flying-day-")
+@app.post("/api/v1/update-flying-day")
+@flask_login.login_required
+def update_flying_day():
+    db = get_db()
+    cur = db.cursor()
+    data = request.get_json()
+    day = FlyingDay.from_json(data)
+
+    # TODO - partial update would be better
+    print(repr(day.id))
+    cur.execute("delete from flying_days where id = ?", (day.id,))
+    cur.execute("delete from flying_days_instructors where flying_day = ?", (day.id,))
+    cur.execute("delete from flying_days_supervisors where flying_day = ?", (day.id,))
+    cur.execute("delete from flying_days_transporters where flying_day = ?", (day.id,))
+    cur.execute("delete from flying_days_people where flying_day = ?", (day.id,))
+
+    add_flying_day(db, day)
+    db.commit()
+    return flask.Response(status=200)
 
 @app.route("/api/v1/list_signups")
 @flask_login.login_required
@@ -234,7 +254,7 @@ def availability_form():
     data = request.get_json()
     print(data)
     db = get_db()
-    main.ingest_one_signup(db, data["trial"], data["briefing"], data["name"], data["availability"], data["notes"], data["email"], data["phone"], data["car"], )
+    main.ingest_one_signup(db, data["trial"], data["briefing"], data["name"], data["availability"], data["notes"], data["email"], data["phone"], data["car"], data["tourist"])
     return flask.Response(status=200)
 
 @app.route("/api/v1/update-cell", methods=["POST"])
