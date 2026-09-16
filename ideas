@@ -32,4 +32,4 @@ nice:
 
 bugs:
 	- deleting number cells in db sets them to zero even when they should disappear
-	- working on: flying days, doesnt display instruct or supervise
+	x working on: flying days, doesnt display instruct or supervise

@@ -2,6 +2,7 @@
 <script lang="ts">
     // TODOOOOOOOO TODO TODO make this work without JS
     import YesNo from "./YesNo.svelte";
+    import Radio from "./Radio.svelte";
     const FRIDAY   = 0b0010000;
     const SATURDAY = 0b0100000;
     const SUNDAY   = 0b1000000;
@@ -10,12 +11,13 @@
     let phone: string = $state("");
     let email: string = $state("");
     let notes: string = $state("");
-    let trial: "yes" | "no" | undefined = $state();
-    let briefing: "yes" | "no" | undefined = $state();
+    let trial: "Yes" | "No" | undefined = $state();
+    let briefing: "Yes" | "No" | undefined = $state();
     let friday: boolean = $state(false);
     let saturday: boolean = $state(false);
     let sunday: boolean = $state(false);
-    let car: "yes" | "no" | undefined = $state();
+    let car: "Yes" | "No" | undefined = $state();
+    let tourist: string | undefined = $state();
 
     let tried_submit = $state(false);
 
@@ -27,21 +29,31 @@
             phone.trim() !== "" &&
             email.trim() !== "" &&
             trial !== undefined &&
-            (trial === "no" || briefing !== undefined)
+            (trial === "No" || briefing !== undefined)
         ) {
             let availability = 0;
             if (friday) availability |= FRIDAY;
             if (saturday) availability |= SATURDAY;
             if (sunday) availability |= SUNDAY;
+
+            let tourist_idx = 0;
+            if (tourist === "Experience gliding") {
+                tourist_idx = 2;
+            } else if (tourist === "Not sure yet") {
+                tourist_idx = 1;
+            } else if (tourist === "Learn to fly") {
+                tourist_idx = 0;
+            }
             const packet = {
                 name: name,
                 phone: phone,
                 email: email,
-                trial: trial == "yes",
-                briefing: briefing == "yes",
+                trial: trial == "Yes",
+                briefing: briefing == "Yes",
                 availability: availability,
-                car: car == "yes",
+                car: car == "Yes",
                 notes: notes,
+                tourist: tourist_idx,
             };
             fetch("/api/v1/availability_form", {
               method: "POST",
@@ -79,10 +91,14 @@
     <YesNo name="trial" bind:value={trial} highlight_required={trial === undefined && tried_submit} />
   </div>
 
-{#if trial == "yes"}
+{#if trial == "Yes"}
   <div class="question">
-    <p>2.5. Do you plan to attend the briefing? <span class="required">*</span></p>
-    <YesNo name="brief" bind:value={briefing} highlight_required={trial === "yes" && briefing === undefined && tried_submit} />
+    <p>2.1. Do you plan to attend the briefing? <span class="required">*</span></p>
+    <YesNo name="brief" bind:value={briefing} highlight_required={trial === "Yes" && briefing === undefined && tried_submit} />
+  </div>
+  <div class="question">
+    <p>2.2. What do want to get out of flying with us? <span class="required">*</span></p>
+    <Radio name="tourist"  choices={["Experience gliding", "Learn to fly", "Not sure yet"]} bind:value={tourist} highlight_required={trial === "Yes" && briefing === undefined && tried_submit} />
   </div>
 {/if}
 
