@@ -182,7 +182,7 @@
         } else if (column == RowIx.Emails || column == RowIx.Phones) {
             table[row].cells[column] = value.trim();
         } else if (column == RowIx.Keenness) {
-            table[row].cells[column] = value == "" ? 0 : Number.parseFloat(value);
+            table[row].cells[column] = value == "" ? null : Number.parseFloat(value);
         } else {
             updated = false;
         }
@@ -281,7 +281,12 @@
             }
             case RowIx.Keenness: {
                 let score = row.cells[column];
-                return [score === null ? "" : score.toString(), ""];
+                let cls = "";
+                if (score !== null) {
+                    let s = Math.round(Math.max(Math.min(score, 10), 0));
+                    cls = "keenness-" + s;
+                }
+                return [score === null ? "" : score.toString(), cls];
             }
             case RowIx.BriefingDate: {
                 let date_str = "";
@@ -406,5 +411,15 @@
     .black {
         background-color: #888888;
     }
-
+.keenness-0 { background-color: #e62e2e; }
+.keenness-1 { background-color: #e6552e; }
+.keenness-2 { background-color: #e67c2e; }
+.keenness-3 { background-color: #e6a32e; }
+.keenness-4 { background-color: #e6cb2e; }
+.keenness-5 { background-color: #d9e62e; }
+.keenness-6 { background-color: #b2e62e; }
+.keenness-7 { background-color: #8be62e; }
+.keenness-8 { background-color: #64e62e; }
+.keenness-9 { background-color: #3de62e; }
+.keenness-10 { background-color: #2ee646; }
 </style>

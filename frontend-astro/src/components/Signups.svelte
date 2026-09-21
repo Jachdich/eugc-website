@@ -1,7 +1,7 @@
 <script lang="ts">
     import { FRIDAY, get_people_names, SATURDAY, SUNDAY } from "./api";
     import "./table.css";
-    type Signup = [number, number, Date, boolean, boolean, number, boolean, string];
+    type Signup = [number, number, Date, boolean, boolean, number, boolean, boolean, string];
     let signups: Signup[] = $state([]);
 
     async function get_signups(): Promise<{ rows: any[] }> {
@@ -16,17 +16,20 @@
     get_signups().then((ss) => signups = ss["rows"].map((s) => [s[0], s[1], new Date(s[2] * 1000.0), ...s.slice(3)] as Signup));
 
     function format_signups(signup: Signup): string[] {
+        const yes = "✅";
+        const no = "❌";
         return [
             signup[0].toString(),
             people_names.get(signup[1]),
             signup[2].toLocaleString(),
-            signup[3] ? "Yes" : "No",
-            signup[4] ? "Yes" : "No",
+            signup[3] ? yes : no,
+            signup[4] ? yes : no,
             (signup[5] & FRIDAY) != 0 ? "✅" : "",
             (signup[5] & SATURDAY) != 0 ? "✅" : "",
             (signup[5] & SUNDAY) != 0 ? "✅" : "",
-            signup[6] ? "Yes" : "No",
-            signup[7]
+            signup[6] ? yes : no,
+            signup[7] ? yes : no,
+            signup[8]
         ];
     }
 
@@ -40,11 +43,12 @@
             <th>Person</th>
             <th>Completed</th>
             <th>Trial?</th>
-            <th>Attending briefing?</th>
+            <th>Briefing?</th>
             <th>Fri</th>
             <th>Sat</th>
             <th>Sun</th>
             <th>Has car?</th>
+            <th>Has bike?</th>
             <th>Notes</th>
         </tr>
     </thead>

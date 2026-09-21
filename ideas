@@ -16,11 +16,11 @@ keep track of why we didn't fly on particular days
 
 essential:
 	x login
-	- register/add accounts
+	/ register/add accounts
 	- add yourself or others to org
 	/ modify cells in db
 	- adding new members manually
-	- store org in db properly!!! difficult
+	/ store org in db properly!!! difficult
 	- store ranked choice per day cells better/at all
 
 nice:
@@ -29,6 +29,8 @@ nice:
 	- clean up the damned API
 	- slots in org auto display as green in member list if they are within limits
 	- transfer ranked people from member list to org
+	- hide "are you trial" and "are you attending briefing" if they are definitely NOT trial
+	
 
 bugs:
 	- deleting number cells in db sets them to zero even when they should disappear
