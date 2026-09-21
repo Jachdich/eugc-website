@@ -58,7 +58,7 @@
 
 <h3>EUGC Flying Account Registration</h3>
 
-<span class="required">*</span> required
+<p class="required-container"><span class="required">*</span> required</p>
 <form onsubmit={submit}>
   <div class="question">
     <label for="name">1. Please enter your full name <span class="required">*</span></label>

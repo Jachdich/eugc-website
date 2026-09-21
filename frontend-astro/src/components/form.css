@@ -33,3 +33,19 @@ input[type="submit"] {
 input[type="radio"] {
     margin: 0px;
 }
+
+form {
+    padding-left: 32px;
+}
+
+.required-container {
+    padding-left: 32px;
+}
+
+input {
+    background-color: inherit;
+    color: inherit;
+    border: 1px solid var(--col-panel-3);
+    border-radius: 5px;
+}
+

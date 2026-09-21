@@ -1,6 +1,7 @@
 
 ---
 import BasePage from '../layouts/BasePage.astro';
+import "../components/form.css";
 ---
 
 <BasePage>
@@ -23,20 +24,22 @@ import BasePage from '../layouts/BasePage.astro';
   </script>
   
   <div class="con-content">
-	<div id="form" class="con-form">
-		<label for="id">User ID</label>
+	<form id="form" class="con-form">
+		<label for="id">Email</label>
 		<input type="text" id="id" />
 		<br>
 		<label for="password">Password</label>
 		<input type="password" id="password"/>
 		<br>
 		<input type="submit" />
-	</div>
+	</form>
   </div>
 </BasePage>
 
 
 <style>
+
+
   a {
     text-decoration: none;
     color: var(--col-accent);
@@ -49,12 +52,13 @@ import BasePage from '../layouts/BasePage.astro';
 	display: flex;
 	flex-direction: column;
 	
-	gap: 12px;
+	gap: 2px;
   }
 
   .con-content {
-      margin-left: 30%;
-      margin-right: 30%;
+      margin-left: auto;
+      margin-right: auto;
+      width: fit-content;
 
       margin-top: 96px;
 

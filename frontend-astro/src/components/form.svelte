@@ -74,7 +74,7 @@
 
 
 {#if logged_in}
-    <span class="required">*</span> required
+    <p class="required-container"><span class="required">*</span> required</p>
     <form onsubmit={submit}>
 
       <div class="question">

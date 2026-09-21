@@ -25,6 +25,7 @@
     display: flex;
     flex-direction: row;
 }
+
 .highlight-required {
     border: 2px solid red;
     border-radius: 5px;

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { dark2, light2 } from "./theme";
     let logged_in = false;
     let uname: string | undefined = undefined;
     let roles: number[] = [];
@@ -22,6 +23,11 @@
       Gliding Club
     </span>
   </span>
+
+  <div style="display: flex; flex-direction: row;"><input type="button" onclick={dark2} value="dark mode" />
+
+  <input type="button" onclick={light2} value="light mode"/>
+  </div>
 
   <a class="link-nav-element" href="/">Home</a>
   <a class="link-nav-element" href="/gettingstarted">Getting Started</a>
@@ -49,7 +55,7 @@
   </span>
 
   {#if logged_in}
-    <a class="link-nav-element" href="/api/v1/signup">Flying sign-up</a>
+    <a class="link-nav-element" href="/signup">Flying sign-up</a>
     <a class="link-nav-element" href="/api/v1/logout">Log out</a>
   {:else}
     <a class="link-nav-element" href="/login">Log in</a>
@@ -69,7 +75,7 @@
       gap: 8px;
       
       padding-top: 32px;
-      padding-left: 96px;
+      padding-left: 32px;
 
       font-size: 18px;
     }
