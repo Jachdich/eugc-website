@@ -2,11 +2,13 @@
     import { onMount } from "svelte";
     let logged_in = false;
     let uname: string | undefined = undefined;
+    let roles: number[] = [];
     async function check_logged_in() {
         let response = await fetch("/api/v1/is_logged_in");
         let json = await response.json();
         logged_in = json["logged_in"];
         uname = json["uname"];
+        roles = json["roles"];
     }
 	onMount(() => {
       check_logged_in();
@@ -30,7 +32,7 @@
   <a class="link-nav-element" href="/faq">FAQs</a>
   <a class="link-nav-element" href="/contact">Contact</a>
 
-  {#if logged_in}
+  {#if roles.includes(1)}
     <span class="lab-nav-element">Database</span>
     <a class="link-nav-element" href="/db/members">Member list</a>
     <a class="link-nav-element" href="/db/signups">Signups</a>
@@ -47,9 +49,11 @@
   </span>
 
   {#if logged_in}
+    <a class="link-nav-element" href="/api/v1/signup">Flying sign-up</a>
     <a class="link-nav-element" href="/api/v1/logout">Log out</a>
   {:else}
     <a class="link-nav-element" href="/login">Log in</a>
+    <a class="link-nav-element" href="/register">Register</a>
   {/if}
 </div>
 

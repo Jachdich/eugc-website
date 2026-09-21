@@ -72,6 +72,16 @@
         });
     }
 
+    function resize_textarea(e: HTMLTextAreaElement, day_idx: number) {
+        e.style.height = `${e.scrollHeight}px`;
+        let notes = undefined;
+        const text = e.value;
+        if (text !== "") {
+            notes = text;
+        }
+        days[day_idx].notes = notes;
+    }
+
     // const max = 3;
 </script>
 
@@ -148,7 +158,7 @@
         <tr>
             <td>Spaces</td>
             {#each day.transport as transportor, r_idx}
-                <td><input type="text" style="width: 48px;" value="{transportor[1]}" oninput={(e) => validate_number(e, day_idx, r_idx)} /></td>
+                <td><input type="text" style="width: 48px;" value="{transportor[1]}" oninput={(e) => validate_number(e, day_idx, r_idx)} onblur={() => net_update(day_idx)} /></td>
             {/each}
         </tr>
         <tr>
@@ -168,8 +178,24 @@
         <tr><td>Attendance</td><td>{day.attend.length}/{day.transport.reduce((a, b) => a + b[1], 0)}</td></tr>
         <tr>
             <td>Notes</td>
-            <td style="width: 0px;" colspan="10">{day.notes === undefined ? "None" : day.notes}</td>
+            <td style="width: 0px;" colspan="10">
+                <textarea
+                    class="notes"
+                    onblur={() => net_update(day_idx)}
+                    onchange={(e) => resize_textarea(e.currentTarget, day_idx)}
+                    onkeyup={(e) => resize_textarea(e.currentTarget, day_idx)}
+                    value={day.notes === undefined ? "" : day.notes}
+                ></textarea></td>
         </tr>
     </tbody></table>
 {/each}
 
+<style>
+    .notes {
+        overflow-x: hidden;
+        width: 0;
+        min-width: 100%;
+        padding: 0px;
+        margin: 0px;
+    }
+</style>

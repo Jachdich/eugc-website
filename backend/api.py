@@ -9,6 +9,7 @@ import sqlite3
 from flask import g
 from dataclasses import dataclass
 from argon2 import PasswordHasher
+from functools import wraps
 password_hasher = PasswordHasher()
 
 #meow
@@ -26,24 +27,54 @@ app.secret_key = "super secret string"  # Change this!
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
 @dataclass
 class UserAccount(flask_login.UserMixin):
     id: int
     password_hash: str
+    email: str
+    roles: list[str]
+    def get_id(self):
+        return self.email
 
 @login_manager.user_loader
 def user_loader(email):
     db = get_db()
     cur = db.cursor()
+    # TODO maybe left join this
     users = list(cur.execute("select id, password_hash from people where email = ?", (email,)))
     if len(users) == 0:
         return None
     assert len(users) == 1, ">1 users with the same email"
     user = users[0]
+    roles = [i[0] for i in cur.execute("select role from people_roles where person = ?", (user[0],))]
     try:
-        return UserAccount(*user)
+        return UserAccount(*user, email, roles)
     except StopIteration:
         return None
+
+def role_required(role):
+    def role_required_inner(func):
+        @wraps(func)
+        def decorated_view(*args, **kwargs):
+            if not role in flask_login.current_user.roles:
+                return flask_login.current_app.login_manager.unauthorized()
+            return func(*args, **kwargs)
+
+        return decorated_view
+    return role_required_inner
+
 
 @app.post("/api/v1/register")
 def api_register():
@@ -53,21 +84,20 @@ def api_register():
     new_account_id = make_account(db, data["email"], data["phone"], data["name"], data["password"], data["tourist"])
     if new_account_id is None:
         return flask.Response(status=409)
-    print(new_account_id)
-    user = user_loader(new_account_id)
+
+    user = user_loader(data["email"])
     if user is None or not password_hasher.verify(user.password_hash, data["password"]):
         return flask.Response(status=403)
 
     flask_login.login_user(user)
     return flask.Response(status=200)
 
-
 @app.post("/api/v1/login")
 def api_login():
     data = request.get_json()
     user = user_loader(data["id"])
 
-    if user is None or not password_hasher.verify(user.password_hash, data["password"]):
+    if user is None or user.password_hash is None or not password_hasher.verify(user.password_hash, data["password"]):
         return flask.Response(status=403)
 
     if password_hasher.check_needs_rehash(user.password_hash):
@@ -89,27 +119,17 @@ def logout():
 def is_logged_in():
     val = flask_login.current_user.is_authenticated
     uname = None
+    db = get_db()
+    cur = db.cursor()
+    roles = []
     if val:
-        uname = flask_login.current_user.id
-    return {"logged_in": val, "uname": uname}
-
-# end login test
-
-
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
+        uname = next(cur.execute("select name from people where id = ?", (flask_login.current_user.id,)))[0]
+        roles = flask_login.current_user.roles
+    return {"logged_in": val, "uname": uname, "roles": roles}
 
 @app.route('/api/v1/add_signups', methods=['POST'])
 @flask_login.login_required
+@role_required(1)
 def upload_file():
     # check if the post request has the file part
     if 'file' not in request.files:
@@ -130,6 +150,7 @@ def upload_file():
 
 @app.route("/api/v1/get_people_names", methods=["GET"])
 @flask_login.login_required
+@role_required(1)
 def get_people_names():
     db = get_db()
     cur = db.cursor()
@@ -138,6 +159,7 @@ def get_people_names():
 # TODO this may perform horribly if the number of users grows
 @app.route("/api/v1/list_people", methods=["GET"])
 @flask_login.login_required
+@role_required(1)
 def list_people():
     db = get_db()
     people = [main.person_info(db, p) for p in main.list_people(db)]
@@ -173,14 +195,25 @@ def list_people():
             signups_since = list(cur.execute("select count(1) from signups where person = ? and completed_datetime >= ?", (person.id, date.timestamp())))
             assert len(signups_since) == 1
             signups_since_last_flight = signups_since[0][0]
+
+        recency = None
+        if person.briefing_date is not None and last_flight_date is not None:
+            if person.briefing_date > last_flight_date:
+                recency = person.briefing_date
+            else:
+                recency = last_flight_date
+        elif person.briefing_date is not None:
+            recency = person.briefing_date
+        elif last_flight_date is not None:
+            recency = last_flight_date
             
         row = [
             person.id,
             person.name,
             person.notes,
             person.e_number,
-            person.emails,
-            person.phones,
+            person.email,
+            person.phone,
             main.num_signups(db, person.id),
             main.num_flying_days(db, person.id),
             person.keenness,
@@ -197,6 +230,7 @@ def list_people():
 
 @app.route("/api/v1/get-flying-days")
 @flask_login.login_required
+@role_required(1)
 def get_flying_days():
     db = get_db()
     ids = list_flying_days(db)
@@ -205,6 +239,7 @@ def get_flying_days():
 
 @app.post("/api/v1/update-flying-day")
 @flask_login.login_required
+@role_required(1)
 def update_flying_day():
     db = get_db()
     cur = db.cursor()
@@ -225,6 +260,7 @@ def update_flying_day():
 
 @app.route("/api/v1/list_signups")
 @flask_login.login_required
+@role_required(1)
 def list_signups():
     db = get_db()
     cur = db.cursor()
@@ -233,6 +269,7 @@ def list_signups():
 
 @app.route("/api/v1/list_briefings")
 @flask_login.login_required
+@role_required(1)
 def list_briefings():
     db = get_db()
     cur = db.cursor()
@@ -241,6 +278,7 @@ def list_briefings():
 
 @app.post("/api/v1/add-briefing")
 @flask_login.login_required
+@role_required(1)
 def add_briefing():
     db = get_db()
     cur = db.cursor()
@@ -257,13 +295,15 @@ def add_briefing():
 @flask_login.login_required
 def availability_form():
     data = request.get_json()
-    print(data)
+    if data["availability"] == 0:
+        return flask.Response(status=401)
     db = get_db()
-    main.ingest_one_signup(db, data["trial"], data["briefing"], data["name"], data["availability"], data["notes"], data["email"], data["phone"], data["car"], data["tourist"])
+    main.ingest_one_signup(db, flask_login.current_user.id, data["trial"], data["briefing"], data["availability"], data["notes"], data["car"], data["bike"])
     return flask.Response(status=200)
 
 @app.route("/api/v1/update-cell", methods=["POST"])
 @flask_login.login_required
+@role_required(1)
 def update_cell():
     data = request.get_json()
     db = get_db()
@@ -283,11 +323,9 @@ def update_cell():
     if col == 3:
         cur.execute("update people set e_number = ? where id = ?", (value, id))
     if col == 4:
-        cur.execute("delete from emails where person = ?", (id,))
-        cur.executemany("insert into emails (person, email) values (?, ?)", [(id, v) for v in value])
+        cur.execute("update people set email = ? where id = ?", (value, id))
     if col == 5:
-        cur.execute("delete from phones where person = ?", (id,))
-        cur.executemany("insert into phones (person, phone) values (?, ?)", [(id, v) for v in value])
+        cur.execute("update people set phone = ? where id = ?", (value, id))
     if col == 8:
         cur.execute("update people set keenness = ? where id = ?", (value, id))
 
@@ -295,6 +333,37 @@ def update_cell():
     return flask.Response(status=200)
         
     
+# TODO stupid hack
+from threading import Lock
+mutex = Lock()
+
+@app.before_request
+def before_request():
+    with mutex:
+        db = get_db()
+        cur = db.cursor()
+        latest_org = cur.execute("select date from flying_days order by date desc limit 1")
+        the_date = latest_org.fetchone()
+        the_date = datetime.datetime.fromtimestamp(the_date[0]).date() if the_date is not None else None
+        if the_date is None:
+            date = datetime.date.today()
+        elif (the_date - datetime.date.today()).days < 7:
+            date = the_date
+        else:
+            return
+
+        while date < datetime.date.today() + datetime.timedelta(days=7):
+            this_day = date.isoweekday() - 1
+            until_friday = (4 - this_day) % 7
+            friday = date + datetime.timedelta(days=until_friday)
+            saturday = friday + datetime.timedelta(days=1)
+            sunday = friday + datetime.timedelta(days=2)
+
+            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(friday, datetime.datetime.min.time()), [], [], [], [], None))
+            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(saturday, datetime.datetime.min.time()), [], [], [], [], None))
+            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(sunday, datetime.datetime.min.time()), [], [], [], [], None))
+
+            date = sunday
 
 if __name__ == "__main__":
     app.run(debug=True)

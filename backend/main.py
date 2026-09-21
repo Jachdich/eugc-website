@@ -21,8 +21,8 @@ create table if not exists signups (
     attending_briefing boolean not null,
     available_days integer not null,
     has_car boolean not null,
+    has_bike boolean not null,
     notes text,
-    tourist integer not null,
     foreign key (person) references people(id)
 )""")
 
@@ -74,7 +74,7 @@ create table if not exists flying_days_supervisors (
 cur.execute("""
 create table if not exists people (
     id integer primary key,
-    name text not null unique,
+    name text not null,
     e_number integer unique,
     keenness real,
     role number,
@@ -84,6 +84,23 @@ create table if not exists people (
     phone text not null,
     password_hash text
 )""")
+
+cur.execute("""
+create table if not exists people_roles (
+    id integer primary key,
+    person integer not null,
+    role integer not null,
+    foreign key (person) references people(id),
+    foreign key (role) references roles(id)
+)
+""")
+
+cur.execute("""
+create table if not exists roles (
+    id integer primary key,
+    name string not null
+)
+""")
 
 cur.execute("""
 create table if not exists briefings (
@@ -202,8 +219,8 @@ def ingest_signups(db, data: list[tuple[any]]):
             person_id = next(cur.execute("insert into people (name, tourist, email, phone) values (?, ?, ?, ?) returning id", (name, 1, email, phone)))[0]
 
         cur.execute(
-            "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes, tourist) values (?, ?, ?, ?, ?, ?, ?, ?)",
-            (person_id, start.timestamp(), reported_trial, False, available_days, car, notes, 1)
+            "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, has_bike, notes) values (?, ?, ?, ?, ?, ?, ?, ?)",
+            (person_id, start.timestamp(), reported_trial, False, available_days, car, False, notes)
         )
 
     db.commit()
@@ -232,7 +249,7 @@ def make_account(db, email, phone, name, password, tourist):
 
     # case 2: user already in db, but not registered (doesn't have a password yet)
     if id != None and ph == None:
-        cur.execute("update people set password_hash = ? where id = ?", (hash, id))
+        cur.execute("update people set password_hash = ?, name = ?, email = ?, phone = ?, tourist = ? where id = ?", (hash, name, email, phone, tourist, id))
 
     # case 3: user not in db
     if id == None:
@@ -241,7 +258,7 @@ def make_account(db, email, phone, name, password, tourist):
     db.commit()
     return id
         
-def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_days, notes, car):
+def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_days, notes, car, bike):
     cur = db.cursor()
     submit_time = datetime.datetime.now().timestamp()
 
@@ -256,8 +273,8 @@ def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_da
     # cur.execute("update people set tourist = ? where id = ?", (person_id, tourist))
 
     cur.execute(
-        "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, notes) values (?, ?, ?, ?, ?, ?, ?)",
-        (person_id, submit_time, reported_trial, briefing, available_days, car, notes)
+        "insert into signups (person, completed_datetime, reported_trial, attending_briefing, available_days, has_car, has_bike, notes) values (?, ?, ?, ?, ?, ?, ?, ?)",
+        (person_id, submit_time, reported_trial, briefing, available_days, car, bike, notes)
     )
 
     db.commit()
@@ -363,7 +380,7 @@ def add_flying_day(db, day: FlyingDay):
     if day.id is None:
         day.id = next(cur.execute("insert into flying_days (date, notes) values (?,  ?) returning id", (day.date.timestamp(), day.notes)))[0]
     else:
-        cur.execute("insert into flying_days (id, date, notes) values (?, ?,  ?) returning id", (day.id, day.date.timestamp(), day.notes))
+        cur.execute("insert into flying_days (id, date, notes) values (?, ?, ?)", (day.id, day.date.timestamp(), day.notes))
     for person in day.attend:
         cur.execute("insert into flying_days_people (flying_day, person) values (?, ?)", (day.id, person))
     for person in day.instruct:
@@ -415,32 +432,35 @@ if fresh_start:
             if briefing_date is not None and briefing_score is not None:
                 add_briefing(con, briefing_date, [(person_id, briefing_score)])
 
-paths = [
- "Edinburgh University Gliding Club Sem2 2025_2026(1-7).xlsx",
- "Edinburgh University Gliding Club Sem2 2025_2026(1-8).xlsx",
-]
-if fresh_start:
+    cur.execute("insert into people (name, e_number, keenness, notes, tourist, email, phone) values (?, ?, ?, ?, ?, ?, ?)", ("James Kitching", "E1552", None, None, 0, "s2419438@ed.ac.uk", "+44 7729401806"))
+    a = next(cur.execute("insert into roles (name) values (?) returning id", ("committee",)))
+    person = next(cur.execute("select id from people where name = ?", ("James Kitching",)))
+    cur.execute("insert into people_roles (person, role) values (?, ?)", (person[0], a[0]))
+    print("AAAAAAAA", a)
+    con.commit()
+
+    paths = [
+     "Edinburgh University Gliding Club Sem2 2025_2026(1-7).xlsx",
+     "Edinburgh University Gliding Club Sem2 2025_2026(1-8).xlsx",
+    ]
     for path in paths:
         with open("/home/james/Downloads/"+path, "rb") as f:
             # data = f.read()
             ingest_signups(con, read_excel(f))
+    con.commit()
+    # days = [
+    #     FlyingDay(None, datetime.datetime(2026, 8, 2),  [10], [[4, 1], [5, 1], [6, 1]], [1, 2], [], None),
+    # ]
+
+    # for day in days:
+    #     add_flying_day(con, day)
+    # con.commit()
 
 # add_briefing(datetime.datetime(2025, 12, 4), [(1, 3), (2, 3), (3, 1)])
 
 # for person in people_available(SUNDAY):
 #     info = person_info(person)
 #     print(info,num_signups(person))
-# days = [
-#     FlyingDay(None, datetime.datetime(2026, 1, 2),  [10], [[4, 1], [5, 1], [6, 1]], [1, 2], [], None),
-#     FlyingDay(None, datetime.datetime(2026, 1, 3),  [1], [], [8], [], None),
-#     FlyingDay(None, datetime.datetime(2026, 1, 4),  [18, 19, 20], [[30, 2]], [], [], "Long kinda note because something serious happened at the airfield that caused some significant problems for EUGC including the agreement"),
-#     FlyingDay(None, datetime.datetime(2026, 1, 9),  [], [[6, 4]], [], [], None),
-#     FlyingDay(None, datetime.datetime(2026, 1, 10), [], [], [16], [], "Cancelled due to weather"),
-#     FlyingDay(None, datetime.datetime(2026, 1, 11), [], [], [17], [], None),
-# ]
-
-# for day in days:
-#     add_flying_day(con, day)
 
 def list_people(db):
     cur = db.cursor()
@@ -449,7 +469,6 @@ def list_people(db):
 cols = [[] for _ in range(9)]
 for id in [i[0] for i in cur.execute("select id from people order by (select count(1) from signups where person = people.id)")]:
     info = person_info(con, id)
-    print(info)
     cols[0].append(str(info.name))
     cols[1].append(("E" + str(info.e_number)) if info.e_number is not None else "")
     cols[2].append(info.email)
