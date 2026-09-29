@@ -3,7 +3,6 @@ import flask
 import csv
 import os
 from io import BytesIO
-import openpyxl
 import datetime
 from dataclasses import dataclass
 
@@ -438,10 +437,11 @@ if fresh_start:
     print("AAAAAAAA", a)
     con.commit()
 
-    paths = [
-     "Edinburgh University Gliding Club Sem2 2025_2026(1-7).xlsx",
-     "Edinburgh University Gliding Club Sem2 2025_2026(1-8).xlsx",
-    ]
+
+    #paths = [
+    # "Edinburgh University Gliding Club Sem2 2025_2026(1-7).xlsx",
+    # "Edinburgh University Gliding Club Sem2 2025_2026(1-8).xlsx",
+    #]
     for path in paths:
         with open("/home/james/Downloads/"+path, "rb") as f:
             # data = f.read()
@@ -465,28 +465,28 @@ def list_people(db):
     cur = db.cursor()
     return [i[0] for i in cur.execute("select id from people")]
 
-cols = [[] for _ in range(9)]
-for id in [i[0] for i in cur.execute("select id from people order by (select count(1) from signups where person = people.id)")]:
-    info = person_info(con, id)
-    cols[0].append(str(info.name))
-    cols[1].append(("E" + str(info.e_number)) if info.e_number is not None else "")
-    cols[2].append(info.email)
-    cols[3].append(info.phone)
-    cols[4].append(str(num_signups(con, id)))
-    cols[5].append(str(num_flying_days(con, id)))
-    cols[6].append(str(info.keenness) if info.keenness is not None else "")
-    cols[7].append(str(info.briefing_score) if info.briefing_score is not None else "")
-    cols[8].append(str(info.briefing_date.date()) if info.briefing_date is not None else "")
-
-
-col_sizes = [max(len(i) for i in col) for col in cols]
-
-def pad(s, l):
-    return s + " " * (l - len(s))
-
-for row in zip(*cols):
-    for item, size in zip(row, col_sizes):
-        print(pad(item, size), end=" | ")
-    print()
+# cols = [[] for _ in range(9)]
+# for id in [i[0] for i in cur.execute("select id from people order by (select count(1) from signups where person = people.id)")]:
+    # info = person_info(con, id)
+    # cols[0].append(str(info.name))
+    # cols[1].append(("E" + str(info.e_number)) if info.e_number is not None else "")
+    # cols[2].append(info.email)
+    # cols[3].append(info.phone)
+    # cols[4].append(str(num_signups(con, id)))
+    # cols[5].append(str(num_flying_days(con, id)))
+    # cols[6].append(str(info.keenness) if info.keenness is not None else "")
+    # cols[7].append(str(info.briefing_score) if info.briefing_score is not None else "")
+    # cols[8].append(str(info.briefing_date.date()) if info.briefing_date is not None else "")
+# 
+# 
+# col_sizes = [max(len(i) for i in col) for col in cols]
+# 
+# def pad(s, l):
+    # return s + " " * (l - len(s))
+# 
+# for row in zip(*cols):
+    # for item, size in zip(row, col_sizes):
+        # print(pad(item, size), end=" | ")
+    # print()
         
 con.close()

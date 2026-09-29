@@ -21,8 +21,8 @@ app = Flask(__name__, static_folder="../frontend", static_url_path="/static")
 
 # login test
 
-
-app.secret_key = "super secret string"  # Change this!
+with open("SECRET", "r") as f:
+    app.secret_key = f.read().strip()
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
@@ -369,9 +369,9 @@ def before_request():
             saturday = friday + datetime.timedelta(days=1)
             sunday = friday + datetime.timedelta(days=2)
 
-            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(friday, datetime.datetime.min.time()), [], [], [], [], None))
-            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(saturday, datetime.datetime.min.time()), [], [], [], [], None))
-            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(sunday, datetime.datetime.min.time()), [], [], [], [], None))
+            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(friday, datetime.time(12, 0, 0)), [], [], [], [], None))
+            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(saturday, datetime.time(12, 0, 0)), [], [], [], [], None))
+            add_flying_day(db, FlyingDay(None, datetime.datetime.combine(sunday, datetime.time(12, 0, 0)), [], [], [], [], None))
 
             date = sunday
 
