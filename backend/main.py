@@ -281,26 +281,26 @@ def ingest_one_signup(db, person_id: int, reported_trial, briefing, available_da
 
 def people_available(db, day: int) -> list[int]:
     cur = db.cursor()
-    # now = datetime.datetime.now()
-    now = datetime.datetime(2025, 6, 16, 10, 3, 32, 13513)
+    now = datetime.datetime.now()
+    # now = datetime.datetime(2025, 6, 16, 10, 3, 32, 13513)
     monday = now - datetime.timedelta(days=now.weekday())
     return [i[0] for i in cur.execute("select person from signups where available_days & ? and completed_datetime > ?", (day, monday.timestamp()))]
 
 def availability(db, person: int) -> int:
     cur = db.cursor()
-    now = datetime.datetime(2025, 6, 16, 10, 3, 32, 13513)
+    now = datetime.datetime.now()
     monday = now - datetime.timedelta(days=now.weekday())
-    result = list(cur.execute("select available_days from signups where person = ? and completed_datetime > ?", (person, monday.timestamp())))
+    result = list(cur.execute("select available_days from signups where person = ? and completed_datetime > ? order by completed_datetime desc limit 1", (person, monday.timestamp())))
     if len(result) == 0:
         return 0
     # assert not (len(result) > 1), "More than one person for the same ID"
-    print(result)
-    print(result[0][0])
     return result[0][0]
 
 def num_signups(db, person):
     cur = db.cursor()
-    count = next(cur.execute("select count(1) from signups where person = ?1 limit 1", (person,)))[0]
+    weeks = set([datetime.datetime.fromtimestamp(i[0]).isocalendar()[:2] for i in cur.execute("select completed_datetime from signups where person = ?1", (person,))])
+    count = len(weeks)
+        
     fudge_factor = list(cur.execute("select signups from legacy_info where person = ?", (person,)))
     if len(fudge_factor) > 0:
         count += fudge_factor[0][0]

@@ -1,5 +1,8 @@
 ---
 import BasePage from "../layouts/BasePage.astro";
+import bishop_hill_under_cloud from "../assets/bishop_hill_under_cloud.jpeg";
+import over_loch_leven_in_piglet from "../assets/over_loch_leven_in_piglet.jpeg";
+import diagram from "../assets/diagram.jpg";
 ---
 
 <BasePage>
@@ -29,7 +32,7 @@ import BasePage from "../layouts/BasePage.astro";
         </div>
         <div class="con-img-captioned">
             <!-- <div class="con-img" style="background-image: url('src/assets/bishop_hill_under_cloud.jpeg');"/> -->
-            <img src="src/assets/bishop_hill_under_cloud.jpeg">
+            <img src={bishop_hill_under_cloud.src}>
             <span>Hill under cloud</span>
         </div>
     </div>
@@ -48,7 +51,7 @@ import BasePage from "../layouts/BasePage.astro";
         </div>
         <div class="con-img-captioned">
             <!-- <div class="con-img" style="background-image: url('src/assets/over_loch_leven_in_piglet.jpeg');"/> -->
-            <img src="src/assets/over_loch_leven_in_piglet.jpeg" style="width: 90%">
+            <img src={over_loch_leven_in_piglet.src} style="width: 90%">
             <span>Thermals over Loch Leven</span>
         </div>
     </div>
@@ -68,7 +71,7 @@ import BasePage from "../layouts/BasePage.astro";
         </div>
         <div class="con-img-captioned">
             <!-- <div class="con-img" style="background-image: url('src/assets/diagram.jpg');"/> -->
-            <img src="src/assets/diagram.jpg">
+            <img src={diagram.src}>
             <span>Hill under cloud</span>
         </div>
     </div>

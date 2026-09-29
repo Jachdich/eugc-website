@@ -70,7 +70,7 @@
         table_filtered = table;
     });
     async function get_people(): Promise<{ rows: any[] }> {
-        let table = await fetch("/api/v1/list_people");
+        let table = await fetch("/eugc/api/v1/list_people");
         let json = await table.json();
         return json;
     }
@@ -191,7 +191,7 @@
             const packet = {
                 id: table[row].cells[RowIx.Id], col: column, new_value: table[row].cells[column]
             };
-            fetch("/api/v1/update-cell", {
+            fetch("/eugc/api/v1/update-cell", {
               method: "POST",
               body: JSON.stringify(packet),
               headers: {

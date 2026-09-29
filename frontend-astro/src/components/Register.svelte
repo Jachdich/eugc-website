@@ -34,7 +34,7 @@
                 tourist: tourist_idx,
             };
             
-            fetch("/api/v1/register", {
+            fetch("/eugc/api/v1/register", {
               method: "POST",
               body: JSON.stringify(packet),
               headers: {
@@ -42,13 +42,13 @@
               }
             }).then((response) => {
                 if (response.status == 200) {
-                    window.location.href = "/form-success";
+                    window.location.href = "/eugc/form-success";
                 } else if (response.status == 409) {
                     alert("Unable to create account, email already exists in the system");
-                    window.location.href = "/form-failure";
+                    window.location.href = "/eugc/form-failure";
                 } else {
                     alert("Server sent error code: " + response.status);
-                    window.location.href = "/form-failure";
+                    window.location.href = "/eugc/form-failure";
                 }
             });
         }

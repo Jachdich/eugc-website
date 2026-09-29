@@ -76,7 +76,7 @@ def role_required(role):
     return role_required_inner
 
 
-@app.post("/api/v1/register")
+@app.post("/eugc/api/v1/register")
 def api_register():
     data = request.get_json()
     db = get_db()
@@ -92,7 +92,7 @@ def api_register():
     flask_login.login_user(user)
     return flask.Response(status=200)
 
-@app.post("/api/v1/login")
+@app.post("/eugc/api/v1/login")
 def api_login():
     data = request.get_json()
     user = user_loader(data["id"])
@@ -110,12 +110,12 @@ def api_login():
     print(flask_login.current_user)
     return flask.Response(status=200)
 
-@app.route("/api/v1/logout")
+@app.route("/eugc/api/v1/logout")
 def logout():
     flask_login.logout_user()
     return "Logged out"
 
-@app.route("/api/v1/is_logged_in")
+@app.route("/eugc/api/v1/is_logged_in")
 def is_logged_in():
     val = flask_login.current_user.is_authenticated
     uname = None
@@ -127,7 +127,7 @@ def is_logged_in():
         roles = flask_login.current_user.roles
     return {"logged_in": val, "uname": uname, "roles": roles}
 
-@app.route('/api/v1/add_signups', methods=['POST'])
+@app.route('/eugc/api/v1/add_signups', methods=['POST'])
 @flask_login.login_required
 @role_required(1)
 def upload_file():
@@ -148,7 +148,7 @@ def upload_file():
         ingest_signups(db, table)
         return flask.Response(status=200)
 
-@app.route("/api/v1/get_people_names", methods=["GET"])
+@app.route("/eugc/api/v1/get_people_names", methods=["GET"])
 @flask_login.login_required
 @role_required(1)
 def get_people_names():
@@ -157,7 +157,7 @@ def get_people_names():
     return {"rows": [i for i in cur.execute("select id, name from people")]}
 
 # TODO this may perform horribly if the number of users grows
-@app.route("/api/v1/list_people", methods=["GET"])
+@app.route("/eugc/api/v1/list_people", methods=["GET"])
 @flask_login.login_required
 @role_required(1)
 def list_people():
@@ -228,7 +228,7 @@ def list_people():
 
     return {"rows": rows}
 
-@app.route("/api/v1/get-flying-days")
+@app.route("/eugc/api/v1/get-flying-days")
 @flask_login.login_required
 @role_required(1)
 def get_flying_days():
@@ -237,7 +237,7 @@ def get_flying_days():
     days = [get_flying_day(db, id).to_json() for id in ids]
     return {"rows": days}
 
-@app.post("/api/v1/update-flying-day")
+@app.post("/eugc/api/v1/update-flying-day")
 @flask_login.login_required
 @role_required(1)
 def update_flying_day():
@@ -258,7 +258,7 @@ def update_flying_day():
     db.commit()
     return flask.Response(status=200)
 
-@app.route("/api/v1/list_signups")
+@app.route("/eugc/api/v1/list_signups")
 @flask_login.login_required
 @role_required(1)
 def list_signups():
@@ -267,7 +267,7 @@ def list_signups():
     rows = list(cur.execute("select * from signups"))
     return {"rows": rows}
 
-@app.route("/api/v1/list_briefings")
+@app.route("/eugc/api/v1/list_briefings")
 @flask_login.login_required
 @role_required(1)
 def list_briefings():
@@ -276,7 +276,7 @@ def list_briefings():
     rows = list(cur.execute("select * from briefings order by date desc"))
     return {"rows": rows}
 
-@app.post("/api/v1/add-briefing")
+@app.post("/eugc/api/v1/add-briefing")
 @flask_login.login_required
 @role_required(1)
 def add_briefing():
@@ -291,7 +291,7 @@ def add_briefing():
     db.commit()
     return list(rows[0])
 
-@app.route("/api/v1/availability_form", methods=["POST"])
+@app.route("/eugc/api/v1/availability_form", methods=["POST"])
 @flask_login.login_required
 def availability_form():
     data = request.get_json()
@@ -301,7 +301,7 @@ def availability_form():
     main.ingest_one_signup(db, flask_login.current_user.id, data["trial"], data["briefing"], data["availability"], data["notes"], data["car"], data["bike"])
     return flask.Response(status=200)
 
-@app.route("/api/v1/update-cell", methods=["POST"])
+@app.route("/eugc/api/v1/update-cell", methods=["POST"])
 @flask_login.login_required
 @role_required(1)
 def update_cell():

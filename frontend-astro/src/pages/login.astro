@@ -12,11 +12,11 @@ import "../components/form.css";
         const id_input = document.getElementById("id");
         const password_element = document.getElementById("password");
         const password = password_element.value;
-        let response = await fetch("/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id_input.value, password: password})});
+        let response = await fetch("/eugc/api/v1/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: id_input.value, password: password})});
         if (response.status == 200) {
-            window.location.href = "/gettingstarted";
+            window.location.href = "/eugc/signup";
         } else {
-            window.location.href = "/login-failure";
+            window.location.href = "/eugc/login-failure";
         }
     }
     const form = document.getElementById("form");

@@ -5,11 +5,20 @@
     let uname: string | undefined = undefined;
     let roles: number[] = [];
     async function check_logged_in() {
-        let response = await fetch("/api/v1/is_logged_in");
+        let response = await fetch("/eugc/api/v1/is_logged_in");
         let json = await response.json();
         logged_in = json["logged_in"];
         uname = json["uname"];
         roles = json["roles"];
+    }
+
+    function light() {
+      light2();
+      window.localStorage.setItem("dark-mode", "false");
+    }
+    function dark() {
+      dark2();
+      window.localStorage.setItem("dark-mode", "true");
     }
 	onMount(() => {
       check_logged_in();
@@ -24,30 +33,30 @@
     </span>
   </span>
 
-  <div style="display: flex; flex-direction: row;"><input type="button" onclick={dark2} value="dark mode" />
-
-  <input type="button" onclick={light2} value="light mode"/>
+  <div style="display: flex; flex-direction: row;">
+  <input type="button" onclick={dark} value="dark mode" />
+  <input type="button" onclick={light} value="light mode"/>
   </div>
 
-  <a class="link-nav-element" href="/">Home</a>
-  <a class="link-nav-element" href="/gettingstarted">Getting Started</a>
-  <a class="link-nav-element" href="/intro">What is Gliding?</a>
-  <a class="link-nav-element" href="/trial">Trial Lessons</a>
-  <a class="link-nav-element" href="/training">Training</a>
-  <a class="link-nav-element" href="/comps">Comps & Trips</a>
-  <a class="link-nav-element" href="/faq">FAQs</a>
-  <a class="link-nav-element" href="/contact">Contact</a>
+  <a class="link-nav-element" href="/eugc/">Home</a>
+  <a class="link-nav-element" href="/eugc/gettingstarted">Getting Started</a>
+  <a class="link-nav-element" href="/eugc/intro">What is Gliding?</a>
+  <a class="link-nav-element" href="/eugc/trial">Trial Lessons</a>
+  <a class="link-nav-element" href="/eugc/training">Training</a>
+  <a class="link-nav-element" href="/eugc/comps">Comps & Trips</a>
+  <a class="link-nav-element" href="/eugc/faq">FAQs</a>
+  <a class="link-nav-element" href="/eugc/contact">Contact</a>
 
   {#if roles.includes(1)}
     <span class="lab-nav-element">Database</span>
-    <a class="link-nav-element" href="/db/members">Member list</a>
-    <a class="link-nav-element" href="/db/signups">Signups</a>
-    <a class="link-nav-element" href="/db/briefings">Briefings</a>
-    <a class="link-nav-element" href="/db/org">Flying Organisation</a>
+    <a class="link-nav-element" href="/eugc/db/members">Member list</a>
+    <a class="link-nav-element" href="/eugc/db/signups">Signups</a>
+    <a class="link-nav-element" href="/eugc/db/briefings">Briefings</a>
+    <a class="link-nav-element" href="/eugc/db/org">Flying Organisation</a>
   {/if}
 
   <span class="lab-nav-element">
-    {#if uname !== undefined}
+    {#if uname !== undefined && uname !== null}
       {uname}
     {:else}
       Account
@@ -55,11 +64,11 @@
   </span>
 
   {#if logged_in}
-    <a class="link-nav-element" href="/signup">Flying sign-up</a>
-    <a class="link-nav-element" href="/api/v1/logout">Log out</a>
+    <a class="link-nav-element" href="/eugc/signup">Flying sign-up</a>
+    <a class="link-nav-element" href="/eugc/api/v1/logout">Log out</a>
   {:else}
-    <a class="link-nav-element" href="/login">Log in</a>
-    <a class="link-nav-element" href="/register">Register</a>
+    <a class="link-nav-element" href="/eugc/login">Log in</a>
+    <a class="link-nav-element" href="/eugc/register">Register</a>
   {/if}
 </div>
 
