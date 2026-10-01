@@ -332,6 +332,16 @@ def update_cell():
     db.commit()
     return flask.Response(status=200)
         
+@app.route("/eugc/api/v1/add-user", methods=["POST"])
+@flask_login.login_required
+@role_required(1)
+def add_user():
+    data = request.get_json()
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("insert into people (name, email, phone, tourist) values (?, ?, ?, ?)", (data["name"], data["email"], data["phone"], data["tourist"]))
+    db.commit()
+    return flask.Response(status=200)
     
 # TODO stupid hack
 from threading import Lock

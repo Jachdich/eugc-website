@@ -318,11 +318,75 @@
         }
         return ["Unknown Column", ""];
     }
+
+    let show_new = $state(false);
+    function show_new_member() {
+        show_new = true;
+    }
+
+    let new_name = $state();
+    let new_email = $state();
+    let new_phone = $state();
+    let new_tourist = $state();
+
+    function add_user() {
+        const packet = {
+            name: new_name,
+            email: new_email,
+            phone: new_phone,
+            tourist: new_tourist,
+        };
+        fetch("/eugc/api/v1/add-user", {
+          method: "POST",
+          body: JSON.stringify(packet),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8"
+          }
+        }).then((response) => {
+            if (response.status == 200) {
+                show_new = false;
+            } else {
+                alert("Failed to add user: " + response.status);
+            }
+        });
+    }
     
 </script>
 
 <input type="checkbox" id="avail" onclick={filter_avail}/>
 <label for="avail">Available</label>
+<button onclick={show_new_member}>Add new member</button>
+
+{#if show_new}
+    <div class="bg-darken"></div>
+    <div class="popup">
+        <table>
+            <tbody>
+            <tr>
+                <td><label for="name">Name</label></td>
+                <td><input bind:value={new_name} class="item" style="width: 150px;" id="name" name="name"/></td>
+            </tr>
+            <tr>
+                <td><label for="email">Email</label></td>
+                <td><input bind:value={new_email} class="item" id="email" name="email"/></td>
+            </tr>
+            <tr>
+                <td><label for="phone">Phone</label></td>
+                <td><input bind:value={new_phone} class="item" id="phone" name="phone"/></td>
+            </tr>
+            <tr>
+                <td><label for="name">Tourist</label></td>
+                <td><input type="number" min="0" max="3" bind:value={new_tourist} class="item" id="tourist" name="tourist"/></td>
+            </tr>
+        </tbody>
+        </table>
+
+        <div style="display: flex; flex-direction: row">
+            <button onclick={() => show_new = false}>Cancel</button>
+            <button onclick={add_user}>Add user</button>
+        </div>
+    </div>
+{/if}
 
 <div id="table">
     <table>
@@ -357,6 +421,31 @@
 </div>
 
 <style>
+    .bg-darken {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 2 !important;
+        display: grid;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    .popup {
+        display: grid;
+        padding: 10px;
+        border-bottom: 3px solid var(--panel-3);
+        background-color: white;
+        border-radius: 3px;
+        position: absolute;
+        width: max-content;
+        left: 50%;
+        right: 50%;
+        top: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        z-index: 3;
+    }
 
     table {
         border-collapse: collapse;
