@@ -7,7 +7,7 @@
     let briefings: Briefing[] = $state([]);
 
     async function get_briefings(): Promise<{ rows: any[] }> {
-        let table = await fetch("/api/v1/list_briefings");
+        let table = await fetch("/eugc/api/v1/list_briefings");
         let json = await table.json();
         return json;
     }
@@ -40,7 +40,7 @@
             score: Number.parseFloat(new_score),
         };
 
-        fetch("/api/v1/add-briefing", {
+        fetch("/eugc/api/v1/add-briefing", {
             method: "POST",
             body: JSON.stringify(packet),
             headers: {

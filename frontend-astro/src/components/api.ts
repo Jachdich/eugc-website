@@ -1,5 +1,5 @@
 export async function get_people_names(): Promise<Map<number, string>> {
-    let table = await fetch("/api/v1/get_people_names");
+    let table = await fetch("/eugc/api/v1/get_people_names");
     let json = await table.json();
     let result = new Map();
     for (const row of json["rows"]) {

@@ -1,0 +1,90 @@
+---
+import BasePage from "../layouts/BasePage.astro";
+---
+
+<BasePage>
+  <div class="con-content">
+    <div class="img-banner"/>
+
+    <p>
+        Want to experience the thrill of flight? 
+        We're more than happy to take you along and get you up in the air, 
+        especially on a good flying day! Since we are busy with normal training, 
+        courses and the like, it is essential that you contact us in advance. 
+        Please sign up to our mailing list to sign up for flights, 
+        instructions on the <a href="/contact">contact page</a>.
+    </p>
+
+    <h1>Trial Flights</h1>
+    <p>
+        £95 gets you your first flight and club membership for the rest of the academic year.
+        Flights are in our modern two-seater glider with a qualified instructor and generally last 
+        about 20 minutes. If you want, you'll be able to take the controls and fly the aircraft yourself! 
+        We'll explain everything you need to know. You might also want to have a 
+        look at the <a href="/intro">introduction</a> and <a href="/faq">FAQ</a>.
+    </p>
+
+    <h1>What to bring — what to expect</h1>
+    <p>It's a good idea to bring:</p>
+    <ul>
+        <li>Warm clothes,</li>
+        <li>Sturdy shoes,</li>
+        <li>Wind and water-proof jacket,</li>
+        <li>Some money or food for lunch,</li>
+        <li>Sunglasses and a hat, and</li>
+        <li>A camera if you want one.</li>
+    </ul>
+    <p>
+        The airfield can be wet and muddy, so please don't wear your best shoes and definitely no heels. 
+        A good solid pair of trainers or walking shoes is fine. Skirts aren't advisable, 
+        as they are not compatible with the parachute harness. 
+    </p>
+    <p>
+        Food is available on weekends and Tuesdays via a small cafe at the airfield. 
+        It serves bacon/sausage/egg rolls, and soup for lunch. You may wish to bring your own food, 
+        especially if you're flying during the week and the cafe isn't open.
+    </p>
+    <p>
+        We usually spend a full day at Portmoak and return in the late afternoon/early evening. 
+        If there is time and you want to it may be possible for you to have another flight on the day, 
+        although this is not covered in the trial flight cost and will be charged at our usual 
+        (but very reasonable) flying rates. 
+    </p>
+    <p>
+        We are only able to offer trial flights to students of the University of Edinburgh, 
+        including the Edinburgh College of Art. If you are interested in gliding 
+        but are not part of the university we suggest that you contact the 
+        <a href="http://www.scottishglidingcentre.co.uk/">Scottish Gliding Centre</a> who offer trial flights to the public.
+    </p>
+  </div>
+</BasePage>
+
+<style>
+    .con-content {
+        margin-left: 10%;
+        margin-right: 10%;
+
+        margin-top: 96px;
+        margin-bottom: 96px;
+
+        text-align: justify;
+    }
+    .con-content h1 {
+        margin-top: 48px;
+    }
+
+    a {
+		text-decoration: none;
+		color: var(--col-accent);
+	}
+
+    .img-banner {
+        background-image: url("../assets/trial_flight.jpeg");
+        background-size: cover;
+
+        width: 100%;
+        height: 500px;
+
+        border-radius: 8px;
+    }
+</style>

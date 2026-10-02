@@ -35,3 +35,4 @@ nice:
 bugs:
 	- deleting number cells in db sets them to zero even when they should disappear
 	x working on: flying days, doesnt display instruct or supervise
+    - crash on trying to add 2 people twice to flying org

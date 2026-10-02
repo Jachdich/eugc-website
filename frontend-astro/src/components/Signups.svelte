@@ -5,7 +5,7 @@
     let signups: Signup[] = $state([]);
 
     async function get_signups(): Promise<{ rows: any[] }> {
-        let table = await fetch("/api/v1/list_signups");
+        let table = await fetch("/eugc/api/v1/list_signups");
         let json = await table.json();
         return json;
     }

@@ -1,4 +1,3 @@
-
 <script lang="ts">
 
     import PersonInput from "./PersonInput.svelte";
@@ -18,7 +17,7 @@
     let days: Day[] = $state([]);
 
     export async function get_flying_days(): Promise<Array<Day>> {
-        let table = await fetch("/api/v1/get-flying-days");
+        let table = await fetch("/eugc/api/v1/get-flying-days");
         let json = await table.json();
         return json["rows"].map((day: any) => {
             return {
@@ -60,7 +59,7 @@
             notes: day.notes,
             id: day.id,
         };
-        fetch("/api/v1/update-flying-day", {
+        fetch("/eugc/api/v1/update-flying-day", {
           method: "POST",
           body: JSON.stringify(json),
           headers: {
@@ -176,7 +175,7 @@
             {/each}
             <td><button onclick={() => { day.attend.push(-1); }}>+</button></td>
         </tr>
-        <tr><td>Attendance</td><td>{day.attend.length}/{day.transport.reduce((a, b) => a + b[1], 0)}</td></tr>
+        <tr><td>Attendance</td><td>{day.attend.length + day.supervise.length}/{day.transport.reduce((a, b) => a + b[1], 0)}</td></tr>
         <tr>
             <td>Notes</td>
             <td style="width: 0px;" colspan="10">

@@ -6,39 +6,104 @@ import Nav from "../components/Nav.svelte";
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
+		<script type="text/javascript">
+			function dark2() {
+				document.documentElement.style.setProperty("--col-text-white",  "#f2f0e5");
+				document.documentElement.style.setProperty("--col-text-black",  "#212123");
+				document.documentElement.style.setProperty("--col-panel-0",  "#212123");
+				document.documentElement.style.setProperty("--col-panel-1",  "#45444f");
+				document.documentElement.style.setProperty("--col-panel-2",  "#555461");
+				document.documentElement.style.setProperty("--col-panel-3",  "#646365");
+				document.documentElement.style.setProperty("--col-accent",  "#4b80ca");
+			}
+			function light2() {
+				document.documentElement.style.setProperty("--col-text-white", "#222222");
+				document.documentElement.style.setProperty("--col-text-black", "#ffffff");
+				document.documentElement.style.setProperty("--col-panel-0", "#ffffff");
+				document.documentElement.style.setProperty("--col-panel-1", "#ffffff");
+				document.documentElement.style.setProperty("--col-panel-2", "#dddddd");
+				document.documentElement.style.setProperty("--col-panel-3", "#999999");
+				document.documentElement.style.setProperty("--col-accent", "#4b80ca");
+			}
+
+			let theme = localStorage.getItem("dark-mode") === "true";
+			if (theme) {
+				dark2();
+			} else {
+				light2();
+			}
+		</script>
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lexend:wght@100..900&display=swap" rel="stylesheet">
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>Edinburgh University Gliding Club</title>
+		<style>
+			:root {
+				/* https://lospec.com/palette-list/cc-29 */
+			}
+
+			html,
+			body {
+				margin: 0;
+				width: 100%;
+				height: 100%;
+
+				font-family: "Inter", sans-serif;
+				color: var(--col-text-white);
+			}
+
+			@media (orientation: landscape) {
+				.con-page {
+					display: flex;
+					flex-direction: row;
+
+					background-color: var(--col-panel-0);
+				}
+
+				.con-content {
+					margin: 0;
+
+					width: 100%;
+				}
+
+				.con-nav {
+					margin: 0;
+
+					min-width: 256px;
+					max-width: 256px;
+					min-height: 100vh;
+					max-height: 100%;
+				}
+			}
+
+			@media (orientation: portrait) {
+				.con-page {
+					display: flex;
+					flex-direction: column;
+
+					background-color: var(--col-panel-0);
+				}
+
+				.con-nav {
+					margin: 0;
+
+					width: 100%;
+				}
+			}
+		</style>
 	</head>
 	<body>
-    <div id="whole-page">
-      <div id="nav">
+    <div class="con-page">
+      <div class="con-nav">
         <Nav client:load />
-				<div style="display: flex; justify-content: center;"><p style="font-size: 8pt;"><a href="https://github.com/Jachdich/eugc-website/">Code</a></p></div>
+				<!-- <div style="display: flex; justify-content: center;"><p style="font-size: 8pt;"><a href="https://github.com/Jachdich/eugc-website/">Code</a></p></div> -->
       </div>
-      <div id="main-content">
-    		<slot />
+      <div class="con-content">
+    	<slot />
       </div>
     </div>
 	</body>
 </html>
-
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-    font-family: sans-serif;
-	}
-
-  #main-content {
-    max-width: 1024px;
-  }
-
-  #whole-page {
-    display: flex;
-    flex-direction: row;
-  }
-</style>
