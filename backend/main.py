@@ -288,12 +288,11 @@ def people_available(db, day: int) -> list[int]:
 
 def availability(db, person: int) -> int:
     cur = db.cursor()
-    now = datetime.datetime.now()
+    now = datetime.datetime.combine(datetime.date.today(), datetime.time(2, 0, 0)) # account for the fucking bst shit
     monday = now - datetime.timedelta(days=now.weekday())
     result = list(cur.execute("select available_days from signups where person = ? and completed_datetime > ? order by completed_datetime desc limit 1", (person, monday.timestamp())))
     if len(result) == 0:
         return 0
-    # assert not (len(result) > 1), "More than one person for the same ID"
     return result[0][0]
 
 def num_signups(db, person):
