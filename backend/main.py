@@ -367,7 +367,7 @@ def get_flying_day(db, id: int) -> FlyingDay:
 
 def list_flying_days(db) -> list[int]:
     cur = db.cursor()
-    return [i[0] for i in cur.execute("select id from flying_days")]
+    return [i[0] for i in cur.execute("select id from flying_days order by date desc")]
 
 def last_flying_days(db, person):
     cur = db.cursor()

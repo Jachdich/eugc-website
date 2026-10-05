@@ -82,6 +82,33 @@
         days[day_idx].notes = notes;
     }
 
+    let new_date = $state("");
+    function add_day() {
+        if (new_date === "") {
+            return;
+        }
+        const timestamp = +(new Date(new_date + "T12:00:00.0Z")) / 1000;
+        const packet = {
+            date: timestamp,
+        };
+        fetch("/eugc/api/v1/add-flying-day", {
+            method: "POST",
+            body: JSON.stringify(packet),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        }).then((response) => {
+            if (response.status == 200) {
+                get_flying_days().then(fd => {
+                    days = fd;
+                });
+                new_date = "";
+            } else {
+                alert("Failed to add flying day: " + response.status);
+            }
+        });
+    }
+
     // const max = 3;
 </script>
 
@@ -138,6 +165,8 @@
 </style>
 -->
 
+<input type="date" bind:value={new_date}/>
+<button onclick={add_day}>Add flying day</button>
 {#each days as day, day_idx}
     <h3>{day.date.toDateString()}</h3>
     <table><tbody>

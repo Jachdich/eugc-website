@@ -9,6 +9,7 @@ import sqlite3
 from flask import g
 from dataclasses import dataclass
 from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from functools import wraps
 password_hasher = PasswordHasher()
 
@@ -86,7 +87,10 @@ def api_register():
         return flask.Response(status=409)
 
     user = user_loader(data["email"])
-    if user is None or not password_hasher.verify(user.password_hash, data["password"]):
+    try:
+        if user is None or not password_hasher.verify(user.password_hash, data["password"]):
+            return flask.Response(status=403)
+    except VerifyMismatchError:
         return flask.Response(status=403)
 
     flask_login.login_user(user)
@@ -97,7 +101,10 @@ def api_login():
     data = request.get_json()
     user = user_loader(data["id"])
 
-    if user is None or user.password_hash is None or not password_hasher.verify(user.password_hash, data["password"]):
+    try:
+        if user is None or user.password_hash is None or not password_hasher.verify(user.password_hash, data["password"]):
+            return flask.Response(status=403)
+    except VerifyMismatchError:
         return flask.Response(status=403)
 
     if password_hasher.check_needs_rehash(user.password_hash):
@@ -258,6 +265,19 @@ def update_flying_day():
     db.commit()
     return flask.Response(status=200)
 
+@app.post("/eugc/api/v1/add-flying-day")
+@flask_login.login_required
+@role_required(1)
+def api_add_flying_day():
+    db = get_db()
+    data = request.get_json()
+    if not "date" in data or (type(data["date"]) != float and type(data["date"]) != int):
+        return flask.Response(status=401)
+    date = datetime.datetime.combine(datetime.datetime.fromtimestamp(data["date"]).date(), datetime.time(12, 0, 0)) # make sure it's (roughly) at midday, to avoid timezone issues...
+    day = FlyingDay(None, date, [], [], [], [], None)
+    add_flying_day(db, day)
+    return flask.Response(status=200)
+    
 @app.route("/eugc/api/v1/list_signups")
 @flask_login.login_required
 @role_required(1)
