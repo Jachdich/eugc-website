@@ -225,7 +225,7 @@ def list_people():
             main.num_flying_days(db, person.id),
             person.keenness,
             person.briefing_score,
-            person.briefing_date.timestamp() if person.briefing_date is not None else None,
+            recency.timestamp() if recency is not None else None,
             availability,
             days_since_last_flight,
             signups_since_last_flight,
