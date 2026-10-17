@@ -198,8 +198,12 @@ def list_people():
         if last_flight_date is None and last_signup_date is None:
             signups_since_last_flight = None
         else:
-            date = last_flight_date or last_signup_date
-            signups_since = list(cur.execute("select count(1) from signups where person = ? and completed_datetime >= ?", (person.id, date.timestamp())))
+            
+            if last_flight_date is None:
+                date = 0
+            else:
+                date = last_flight_date.timestamp()
+            signups_since = list(cur.execute("select count(1) from signups where person = ? and completed_datetime >= ?", (person.id, date)))
             assert len(signups_since) == 1
             signups_since_last_flight = signups_since[0][0]
 
