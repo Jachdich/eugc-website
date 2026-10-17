@@ -75,15 +75,23 @@
         return json;
     }
 
-    function filter_avail(event: any) {
-        if (event.target.checked) {
+    let avail_fri = $state(false);
+    let avail_sat = $state(false);
+    let avail_sun = $state(false);
+    let done_briefing = $state(false);
+    let trial = $state(false);
+    function filter_it(event: any) {
+        let any_checked = avail_fri || avail_sat || avail_sun || done_briefing || trial;
+        if (any_checked) {
             table_filtered = table.filter((row) =>
-                row.cells[RowIx.AvailSat] != null ||
-                row.cells[RowIx.AvailSun] != null ||
-                row.cells[RowIx.AvailFri] != null
+                ((avail_sat && row.cells[RowIx.AvailSat] != null) ||
+                (avail_sun && row.cells[RowIx.AvailSun] != null) ||
+                (avail_fri && row.cells[RowIx.AvailFri] != null)) &&
+                ((!done_briefing) || row.cells[RowIx.BriefingScore] != null) &&
+                ((!trial) || row.cells[RowIx.NumFlyingDays] == 0)
             );
         } else {
-            table_filtered = table;
+            table_filtered = table.filter((row) => true);
         }
     }
 
@@ -353,8 +361,16 @@
     
 </script>
 
-<input type="checkbox" id="avail" onclick={filter_avail}/>
-<label for="avail">Available</label>
+<input type="checkbox" id="avail_fri" bind:checked={avail_fri} onchange={filter_it}/>
+<label for="avail_fri">Available fri</label>
+<input type="checkbox" id="avai_satl" bind:checked={avail_sat} onchange={filter_it}/>
+<label for="avai_satl">Available sat</label>
+<input type="checkbox" id="avail_sun" bind:checked={avail_sun} onchange={filter_it}/>
+<label for="avail_sun">Available sun</label>
+<input type="checkbox" id="briefed" bind:checked={done_briefing} onchange={filter_it}/>
+<label for="briefed">Done briefing</label>
+<input type="checkbox" id="trial" bind:checked={trial} onchange={filter_it}/>
+<label for="trial">Trial</label>
 <button onclick={show_new_member}>Add new member</button>
 
 {#if show_new}
