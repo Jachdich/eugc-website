@@ -182,23 +182,30 @@ def list_people():
                 order by flying_days.date desc
                 limit 1
         """, (person.id,)))
-        last_flight_date = None
-        if len(flying_days) > 0:
-            last_flight_date = datetime.datetime.fromtimestamp(flying_days[0][0])
-            days_since_last_flight = (datetime.datetime.now() - last_flight_date).days
-        else:
-            days_since_last_flight = None
 
         signups = list(cur.execute("select completed_datetime from signups where person = ? order by completed_datetime desc limit 1", (person.id,)))
         last_signup_date = None
         if len(signups) > 0:
             last_signup_date = datetime.datetime.fromtimestamp(signups[0][0])
 
+        signups = list(cur.execute("select completed_datetime from signups where person = ? order by completed_datetime asc limit 1", (person.id,)))
+        first_signup_date = None
+        if len(signups) > 0:
+            first_signup_date = datetime.datetime.fromtimestamp(signups[0][0])
+
+        last_flight_date = None
+        if len(flying_days) > 0:
+            last_flight_date = datetime.datetime.fromtimestamp(flying_days[0][0])
+            days_since_last_flight = (datetime.datetime.now() - last_flight_date).days
+        elif first_signup_date is not None:
+            days_since_last_flight = (datetime.datetime.now() - first_signup_date).days
+        else:
+            days_since_last_flight = None
+
         signups_since_last_flight = None
         if last_flight_date is None and last_signup_date is None:
             signups_since_last_flight = None
         else:
-            
             if last_flight_date is None:
                 date = 0
             else:
@@ -366,6 +373,110 @@ def add_user():
     cur.execute("insert into people (name, email, phone, tourist) values (?, ?, ?, ?)", (data["name"], data["email"], data["phone"], data["tourist"]))
     db.commit()
     return flask.Response(status=200)
+
+@app.get("/eugc/api/v1/datasets/signups") 
+@flask_login.login_required
+@role_required(1)
+def signups():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    for elem in cur.execute("select completed_datetime from signups"):
+        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        week = datetime.date.fromisocalendar(year, week, 1)
+        if not week in bins:
+            bins[week] = 0
+        bins[week] += 1
+    xs = [d.isoformat() for d in bins.keys()]
+    ys = [i for i in bins.values()]
+    return {"xs": xs, "ys": ys}
+
+@app.get("/eugc/api/v1/datasets/signups_by_day") 
+@flask_login.login_required
+@role_required(1)
+def signups_by_day():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    for elem in cur.execute("select completed_datetime from signups"):
+        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        if not weekday in bins:
+            bins[weekday] = 0
+        bins[weekday] += 1
+    xs = [["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"][d - 1] for d in bins.keys()]
+    ys = [i for i in bins.values()]
+    return {"xs": xs, "ys": ys}
+
+@app.get("/eugc/api/v1/datasets/flights") 
+@flask_login.login_required
+@role_required(1)
+def flights():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    query = cur.execute("""
+        select flying_days.date from flying_days_people
+            left join flying_days on flying_days_people.flying_day = flying_days.id
+    """)
+    for elem in query:
+        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        week = datetime.date.fromisocalendar(year, week, 1)
+        if not week in bins:
+            bins[week] = 0
+        bins[week] += 1
+    xs = [d.isoformat() for d in bins.keys()]
+    ys = [i for i in bins.values()]
+    return {"xs": xs, "ys": ys}
+
+@app.get("/eugc/api/v1/datasets/instructors") 
+@flask_login.login_required
+@role_required(1)
+def instructors():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    query = cur.execute("select person from flying_days_instructors")
+    for elem in query:
+        if not elem[0] in bins:
+            bins[elem[0]] = 0
+        bins[elem[0]] += 1
+        
+    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d in bins.keys()]
+    ys = [i for i in bins.values()]
+    return {"xs": xs, "ys": ys}
+@app.get("/eugc/api/v1/datasets/transporters") 
+@flask_login.login_required
+@role_required(1)
+def tansporters():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    query = cur.execute("select person from flying_days_transporters")
+    for elem in query:
+        if not elem[0] in bins:
+            bins[elem[0]] = 0
+        bins[elem[0]] += 1
+        
+    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d in bins.keys()]
+    ys = [i for i in bins.values()]
+    return {"xs": xs, "ys": ys}
+@app.get("/eugc/api/v1/datasets/supervisors") 
+@flask_login.login_required
+@role_required(1)
+def supervisors():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    query = cur.execute("select person from flying_days_supervisors")
+    for elem in query:
+        if not elem[0] in bins:
+            bins[elem[0]] = 0
+        bins[elem[0]] += 1
+        
+    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d in bins.keys()]
+    ys = [i for i in bins.values()]
+    return {"xs": xs, "ys": ys}
+    
     
 # TODO stupid hack
 from threading import Lock
