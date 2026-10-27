@@ -387,8 +387,9 @@ def signups():
         if not week in bins:
             bins[week] = 0
         bins[week] += 1
-    xs = [d.isoformat() for d in bins.keys()]
-    ys = [i for i in bins.values()]
+    pairs = sorted(list(bins.items()), key=lambda i: i[0])
+    xs = [d.isoformat() for d, v in pairs]
+    ys = [i for d, i in pairs]
     return {"xs": xs, "ys": ys}
 
 @app.get("/eugc/api/v1/datasets/signups_by_day") 
@@ -403,8 +404,9 @@ def signups_by_day():
         if not weekday in bins:
             bins[weekday] = 0
         bins[weekday] += 1
-    xs = [["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"][d - 1] for d in bins.keys()]
-    ys = [i for i in bins.values()]
+    pairs = sorted(list(bins.items()), key=lambda i: i[0])
+    xs = [["Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"][d - 1] for d, v in pairs]
+    ys = [i for d, i in pairs]
     return {"xs": xs, "ys": ys}
 
 @app.get("/eugc/api/v1/datasets/flights") 
@@ -419,8 +421,9 @@ def flights():
             left join flying_days on flying_days_people.flying_day = flying_days.id
     """)
     for elem in query:
-        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
-        week = datetime.date.fromisocalendar(year, week, 1)
+        year, week_num, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        week = datetime.date.fromisocalendar(year, week_num, 1)
+        print(year, week_num, weekday, week)
         if not week in bins:
             bins[week] = 0
         bins[week] += 1
@@ -434,8 +437,10 @@ def flights():
         week = datetime.date.fromisocalendar(year, week, 1)
         if not week in bins:
             bins[week] = 0
-    xs = [d.isoformat() for d in bins.keys()]
-    ys = [i for i in bins.values()]
+
+    pairs = sorted(list(bins.items()), key=lambda i: i[0])
+    xs = [d.isoformat() for d, i in pairs]
+    ys = [i for d, i in pairs]
     return {"xs": xs, "ys": ys}
 
 @app.get("/eugc/api/v1/datasets/instructors") 
@@ -450,10 +455,12 @@ def instructors():
         if not elem[0] in bins:
             bins[elem[0]] = 0
         bins[elem[0]] += 1
-        
-    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d in bins.keys()]
-    ys = [i for i in bins.values()]
+
+    pairs = list(bins.items())
+    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d, v in pairs]
+    ys = [v for p, v in pairs]
     return {"xs": xs, "ys": ys}
+
 @app.get("/eugc/api/v1/datasets/transporters") 
 @flask_login.login_required
 @role_required(1)
@@ -467,9 +474,11 @@ def tansporters():
             bins[elem[0]] = 0
         bins[elem[0]] += 1
         
-    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d in bins.keys()]
-    ys = [i for i in bins.values()]
+    pairs = list(bins.items())
+    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d, v in pairs]
+    ys = [v for p, v in pairs]
     return {"xs": xs, "ys": ys}
+
 @app.get("/eugc/api/v1/datasets/supervisors") 
 @flask_login.login_required
 @role_required(1)
@@ -482,9 +491,10 @@ def supervisors():
         if not elem[0] in bins:
             bins[elem[0]] = 0
         bins[elem[0]] += 1
-        
-    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d in bins.keys()]
-    ys = [i for i in bins.values()]
+
+    pairs = list(bins.items())
+    xs = [next(cur.execute("select name from people where id = ?", (d,)))[0] for d, v in pairs]
+    ys = [v for p, v in pairs]
     return {"xs": xs, "ys": ys}
     
     
