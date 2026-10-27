@@ -53,6 +53,7 @@
     <a class="link-nav-element" href="/eugc/db/signups">Signups</a>
     <a class="link-nav-element" href="/eugc/db/briefings">Briefings</a>
     <a class="link-nav-element" href="/eugc/db/org">Flying Organisation</a>
+    <a class="link-nav-element" href="/eugc/db/stats">Statistics</a>
   {/if}
 
   <span class="lab-nav-element">

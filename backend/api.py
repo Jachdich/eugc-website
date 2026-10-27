@@ -424,6 +424,16 @@ def flights():
         if not week in bins:
             bins[week] = 0
         bins[week] += 1
+
+    # ensure weeks with 0 flying are actually counted
+    query = cur.execute("""
+        select date from flying_days
+    """)
+    for elem in query:
+        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        week = datetime.date.fromisocalendar(year, week, 1)
+        if not week in bins:
+            bins[week] = 0
     xs = [d.isoformat() for d in bins.keys()]
     ys = [i for i in bins.values()]
     return {"xs": xs, "ys": ys}
