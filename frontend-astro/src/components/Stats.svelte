@@ -11,6 +11,7 @@ onMount(() => {
 (async function() {
   let [xs, ys] = await get_dataset("signups");
   let [xs2, ys2] = await get_dataset("flights");
+  let [xs2_, ys2_] = await get_dataset("new_signups");
   new Chart(
     canvas,
     {
@@ -18,14 +19,9 @@ onMount(() => {
       data: {
         labels: xs,
         datasets: [
-          {
-            label: "signups",
-            data: ys
-          },
-          {
-            label: "flights",
-            data: ys2
-          }
+          {label: "signups", data: ys},
+          {label: "flights", data: ys2},
+          {label: "new signups", data: ys2_},
         ]
       }
     }

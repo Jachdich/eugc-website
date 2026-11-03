@@ -41,7 +41,7 @@
     function format_day(date: Date): string {
         const date_str = date.getDate().toString();
         const last_digit = date_str.slice(-1);
-        const second_last = date_str.slice(-2).slice(0, 1);
+        const second_last = date_str.length == 1 ? "" : date_str.slice(-2).slice(0, 1);
         let suffix = "th";
         if (second_last != "1") {
             if (last_digit == "1") {

@@ -392,6 +392,34 @@ def signups():
     ys = [i for d, i in pairs]
     return {"xs": xs, "ys": ys}
 
+@app.get("/eugc/api/v1/datasets/new_signups") 
+@flask_login.login_required
+@role_required(1)
+def new_signups():
+    db = get_db()
+    cur = db.cursor()
+    bins = {}
+    for elem in cur.execute("select completed_datetime from signups as su where not exists (select 1 from signups where person = su.person and completed_datetime < su.completed_datetime)"):
+        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        week = datetime.date.fromisocalendar(year, week, 1)
+        if not week in bins:
+            bins[week] = 0
+        bins[week] += 1
+
+    # ensure zero values are counted
+    query = cur.execute("""
+        select completed_datetime from signups
+    """)
+    for elem in query:
+        year, week, weekday = datetime.datetime.fromtimestamp(elem[0]).isocalendar()
+        week = datetime.date.fromisocalendar(year, week, 1)
+        if not week in bins:
+            bins[week] = 0
+    pairs = sorted(list(bins.items()), key=lambda i: i[0])
+    xs = [d.isoformat() for d, v in pairs]
+    ys = [i for d, i in pairs]
+    return {"xs": xs, "ys": ys}
+
 @app.get("/eugc/api/v1/datasets/signups_by_day") 
 @flask_login.login_required
 @role_required(1)

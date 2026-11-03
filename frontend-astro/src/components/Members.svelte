@@ -80,15 +80,18 @@
     let avail_sun = $state(false);
     let done_briefing = $state(false);
     let trial = $state(false);
+    let not_trial = $state(false);
     function filter_it(event: any) {
         let any_checked = avail_fri || avail_sat || avail_sun || done_briefing || trial;
         if (any_checked) {
             table_filtered = table.filter((row) =>
-                ((avail_sat && row.cells[RowIx.AvailSat] != null) ||
+                ((!avail_fri && !avail_sat && !avail_sun) ||
+                (avail_sat && row.cells[RowIx.AvailSat] != null) ||
                 (avail_sun && row.cells[RowIx.AvailSun] != null) ||
                 (avail_fri && row.cells[RowIx.AvailFri] != null)) &&
                 ((!done_briefing) || row.cells[RowIx.BriefingScore] != null) &&
-                ((!trial) || row.cells[RowIx.NumFlyingDays] == 0)
+                ((!trial) || row.cells[RowIx.NumFlyingDays] == 0) &&
+                ((!not_trial) || row.cells[RowIx.NumFlyingDays] > 0)
             );
         } else {
             table_filtered = table.filter((row) => true);
@@ -371,6 +374,8 @@
 <label for="briefed">Done briefing</label>
 <input type="checkbox" id="trial" bind:checked={trial} onchange={filter_it}/>
 <label for="trial">Trial</label>
+<input type="checkbox" id="not-trial" bind:checked={not_trial} onchange={filter_it}/>
+<label for="not-trial">Not trial</label>
 <button onclick={show_new_member}>Add new member</button>
 
 {#if show_new}
