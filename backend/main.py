@@ -289,6 +289,7 @@ def availability(db, person: int) -> int:
     cur = db.cursor()
     now = datetime.datetime.combine(datetime.date.today(), datetime.time(2, 0, 0)) # account for the fucking bst shit
     monday = now - datetime.timedelta(days=now.weekday())
+    monday -= datetime.timedelta(hours=12) # this is a stupid hack also due to the fucking bst shit, since people can't really submit forms over the weekend anyway it should be ok. basically just make sure to count people who have signed up even a bit before monday, otherwise some may be missed
     result = list(cur.execute("select available_days from signups where person = ? and completed_datetime > ? order by completed_datetime desc limit 1", (person, monday.timestamp())))
     if len(result) == 0:
         return 0

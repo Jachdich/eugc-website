@@ -204,7 +204,7 @@
             {/each}
             <td><button onclick={() => { day.attend.push(-1); }}>+</button></td>
         </tr>
-        <tr><td>Attendance</td><td>{day.attend.length + day.supervise.length}/{day.transport.reduce((a, b) => a + b[1], 0)}</td></tr>
+        <tr><td>Attendance</td><td>{new Set([...day.attend, ...day.supervise]).size}/{day.transport.reduce((a, b) => a + b[1], 0)}</td></tr>
         <tr>
             <td>Notes</td>
             <td style="width: 0px;" colspan="10">
